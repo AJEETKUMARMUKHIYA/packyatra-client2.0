@@ -1,0 +1,148 @@
+.footer {
+  background: linear-gradient(135deg, #071c2f, #0b2b46);
+  color: #e5e7eb;
+  padding: 60px 20px 20px;
+  font-family: "Inter", sans-serif;
+}
+
+/* MAIN GRID */
+.footer-container {
+  max-width: 1200px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr;
+  gap: 50px;
+}
+
+/* FOOTER BOX */
+.footer-box h4 {
+  font-size: 16px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.footer-box a {
+  display: block;
+  color: #cbd5e1;
+  text-decoration: none;
+  margin-bottom: 10px;
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.footer-box a:hover {
+  color: #f97316;
+}
+
+/* BRAND */
+.footer-logo {
+  font-size: 26px;
+  font-weight: 700;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-tagline {
+  margin: 12px 0 20px;
+  font-size: 14px;
+  color: #94a3b8;
+  max-width: 280px;
+}
+
+/* SOCIAL ICONS */
+.footer-social {
+  display: flex;
+  gap: 14px;
+}
+
+.footer-social a {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+.footer-social a:hover {
+  background: #f97316;
+  transform: translateY(-3px);
+}
+
+/* CONTACT */
+.footer-box p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #cbd5e1;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.footer-box i {
+  /* color: #f97316; */
+  margin-top: 3px;
+}
+
+/* DIVIDER */
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 40px;
+  padding-top: 20px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+/* FOOTER LINKS */
+.footer-left {
+  display: flex;
+  gap: 20px;
+}
+
+.footer-link {
+  color: #94a3b8;
+  font-size: 13px;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.footer-link:hover {
+  color: #f97316;
+}
+
+/* COPYRIGHT */
+.copyright {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .footer-container {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+
+  .footer-left {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
