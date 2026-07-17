@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axiosClient from "../AxiosClient";
 import "../styles/Login.css";
-import moviingTeam from "../assests/Images/moving-team.webp";
+const moviingTeam = "/Images/moving-team.webp";
 const UserLogin = ({ onClose }) => {
   const [MobileNumber, setMobile] = useState("");
   const [otp, setOtp] = useState("");

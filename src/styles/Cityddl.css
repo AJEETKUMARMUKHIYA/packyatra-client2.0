@@ -179,6 +179,10 @@
   pointer-events: none;
 }
 
+.date-input-wrapper-premium .react-datepicker__input-container::before {
+  content: none !important;
+}
+
 
 /* =========================
    ADDRESS SUGGESTIONS

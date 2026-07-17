@@ -1,16 +1,32 @@
 /* ===============================
    FIXED MOVING FORM
 =============================== */
+.main-content {
+  margin-right: 0 !important;
+}
+
+.hero-grid-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+@media (min-width: 992px) {
+  .hero-grid-container {
+    grid-template-columns: 1.15fr 0.85fr;
+  }
+}
+
 .fixed-form {
-  position: fixed;
-  top: 120px;
-  right: 40px;
-  /* width: 420px; */
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
   background: #ffffff;
   border-radius: 20px;
-  /* padding: 24px; */
-  /* box-shadow: 0 24px 50px rgba(15, 23, 42, 0.18); */
-  z-index: 1000;
+  z-index: 10;
 }
 
 .fixed-form h2 {

@@ -1,9 +1,23 @@
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Phone, 
+  ShieldCheck, 
+  Star, 
+  MapPin, 
+  X, 
+  Loader2, 
+  Award, 
+  CheckCircle,
+  Shield,
+  ArrowRight
+} from "lucide-react";
 import axiosClient from "../AxiosClient";
 import { checkAndCreateUser } from "../utils/userService";
 import { isOtpValid } from "../utils/auth";
 import "../styles/Login.css";
-import moviingTeam from "../assests/Images/moving-team.webp";
+
+const moviingTeam = "/Images/moving-team.webp";
 
 const OtpLogin = ({ onSuccess, onClose, userData = {} }) => {
   const [mobileNumber, setMobileNumber] = useState("");
@@ -73,7 +87,7 @@ const OtpLogin = ({ onSuccess, onClose, userData = {} }) => {
       setError("");
       
       // 1. Verify OTP
-       await axiosClient.post("/otp/verify", { mobileNumber, otp });
+      await axiosClient.post("/otp/verify", { mobileNumber, otp });
       
       // 2. Check/Create user in database
       const { userID, addressID } = await checkAndCreateUser(mobileNumber, userData);
@@ -104,71 +118,257 @@ const OtpLogin = ({ onSuccess, onClose, userData = {} }) => {
   };
 
   return (
-    <div className="login-overlay">
-      <div className="login-popup">
-        <button className="close-btn" onClick={onClose}>×</button>
-        <div className="login-image">
-          <img src={moviingTeam} alt="Moving Service" />
-        </div>
-        <div className="login-content">
-          <h3>Login with mobile number</h3>
-          <p className="login-subtitle">We'll send an OTP to verify your number</p>
+    <AnimatePresence>
+      <div className="login-overlay">
+        <motion.div 
+          className="login-overlay-backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+        />
 
-          {step === "MOBILE" && (
-            <>
-              <div className="form-group phone-input">
-                <span className="country-code">🇮🇳 +91</span>
-                <input
-                  type="text"
-                  value={mobileNumber}
-                  onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ""))}
-                  placeholder="Enter mobile number"
-                  maxLength={10}
-                />
-              </div>
-              {error && <div className="error-text">{error}</div>}
-              <button className="login-btn" onClick={sendOtp} disabled={loading}>
-                {loading ? "Sending OTP..." : "Send OTP"}
-              </button>
-                <div className="trust-row">✔ No spam • 100% secure</div>
-              <div className="rating-row">
-                ⭐ 4.8/5 | 15+ Years Experience
-              </div>
-              <div  className="rating-row">
-                🛡️ Damage Protection • Verified Professionals
-              </div>
-              <div  className="rating-row">
-                📍 Serving 50+ Cities Across India
-              </div>
-            </>
-          )}
+        <motion.div 
+          className="login-popup"
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ type: "spring", damping: 25, stiffness: 350 }}
+        >
+          {/* Close Button */}
+          <motion.button 
+            className="close-btn-premium" 
+            onClick={onClose}
+            whileHover={{ scale: 1.1, rotate: 90 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <X size={18} />
+          </motion.button>
 
-          {step === "OTP" && (
-            <>
-              <div className="form-group">
-                <input
-                  type="text"
-                  className="otp-input"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                  placeholder="Enter 6-digit OTP"
-                  maxLength={6}
-                  autoComplete="one-time-code"
-                />
-                <p className="otp-sent-msg">OTP sent to +91 {mobileNumber}</p>
-              </div>
-              {error && <div className="error-text">{error}</div>}
-              <button className="login-btn" onClick={verifyOtp} disabled={loading}>
-                {loading ? "Verifying..." : "Verify & Login"}
-              </button>
-              <div className="resend-otp" onClick={sendOtp}>
-                {loading ? "Sending..." : "Resend OTP"}
-              </div>
-            </>
-          )}
-        </div>
+          {/* Left Column: Premium Interactive Panel */}
+          <div className="login-image-section">
+            <div className="login-image-overlay" />
+            <img src={moviingTeam} alt="Moving Service" className="login-img" />
+            
+            {/* Elegant Floating Cards on the Left Panel */}
+            <div className="floating-badge-container">
+              <motion.div 
+                className="floating-glass-card top-card"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <div className="badge-icon-bg green">
+                  <ShieldCheck size={18} />
+                </div>
+                <div className="badge-content">
+                  <h5>Fully Insured</h5>
+                  <p>100% safety guaranteed</p>
+                </div>
+              </motion.div>
+
+              <motion.div 
+                className="floating-glass-card bottom-card"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <div className="badge-icon-bg blue">
+                  <Star size={16} />
+                </div>
+                <div className="badge-content">
+                  <h5>Rated 4.8/5</h5>
+                  <p>Trusted by 10k+ families</p>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Right Column: Dynamic Form Section */}
+          <div className="login-content-section">
+            <AnimatePresence mode="wait">
+              {step === "MOBILE" ? (
+                <motion.div
+                  key="mobile-step"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.25 }}
+                  className="step-container"
+                >
+                  <div className="login-header-group">
+                    <motion.div 
+                      className="brand-pill"
+                      initial={{ scale: 0.8 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring" }}
+                    >
+                      🚀 Secure Login
+                    </motion.div>
+                    <h3 className="login-title">Welcome to Packyatra</h3>
+                    <p className="login-subtitle">Enter your mobile number to get started with your relocation</p>
+                  </div>
+
+                  <div className="input-field-wrapper">
+                    <label className="input-label">Mobile Number</label>
+                    <div className="phone-input-premium">
+                      <span className="country-prefix">
+                        <span className="flag-icon">🇮🇳</span>
+                        <span className="prefix-text">+91</span>
+                      </span>
+                      <div className="prefix-divider" />
+                      <input
+                        type="tel"
+                        value={mobileNumber}
+                        onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ""))}
+                        placeholder="Enter 10-digit number"
+                        maxLength={10}
+                        autoFocus
+                        className="mobile-text-input"
+                      />
+                    </div>
+                  </div>
+
+                  <AnimatePresence>
+                    {error && (
+                      <motion.div 
+                        className="error-message-box"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        <span className="error-icon">⚠️</span>
+                        <p>{error}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <motion.button 
+                    className="login-btn-premium" 
+                    onClick={sendOtp} 
+                    disabled={loading}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="spinner-icon" size={18} />
+                        <span>Sending Verification SMS...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Send OTP</span>
+                        <ArrowRight size={16} className="btn-arrow" />
+                      </>
+                    )}
+                  </motion.button>
+
+                  {/* Premium Trust Indicators */}
+                  <div className="trust-features-grid">
+                    <div className="trust-feature-item">
+                      <div className="feature-icon">
+                        <Award size={15} />
+                      </div>
+                      <span>15+ Years Relocation Excellence</span>
+                    </div>
+                    <div className="trust-feature-item">
+                      <div className="feature-icon">
+                        <Shield size={15} />
+                      </div>
+                      <span>Zero-Damage Relocation Insurance</span>
+                    </div>
+                    <div className="trust-feature-item">
+                      <div className="feature-icon">
+                        <MapPin size={15} />
+                      </div>
+                      <span>Serving 50+ Cities Nationwide</span>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="otp-step"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.25 }}
+                  className="step-container"
+                >
+                  <div className="login-header-group">
+                    <div className="brand-pill otp-pill">
+                      🔑 Verification
+                    </div>
+                    <h3 className="login-title">Verify OTP</h3>
+                    <p className="login-subtitle">
+                      We sent a 6-digit verification code to <strong className="highlight-phone">+91 {mobileNumber}</strong>
+                    </p>
+                  </div>
+
+                  <div className="input-field-wrapper">
+                    <label className="input-label">Enter 6-Digit Code</label>
+                    <input
+                      type="text"
+                      className="otp-input-premium"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                      placeholder="• • • • • •"
+                      maxLength={6}
+                      autoComplete="one-time-code"
+                      autoFocus
+                    />
+                  </div>
+
+                  <AnimatePresence>
+                    {error && (
+                      <motion.div 
+                        className="error-message-box"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        <span className="error-icon">⚠️</span>
+                        <p>{error}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <motion.button 
+                    className="login-btn-premium verify-btn" 
+                    onClick={verifyOtp} 
+                    disabled={loading}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="spinner-icon" size={18} />
+                        <span>Verifying Account...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle size={16} />
+                        <span>Verify & Proceed</span>
+                      </>
+                    )}
+                  </motion.button>
+
+                  <div className="resend-container">
+                    <span>Didn't receive the OTP?</span>
+                    <button className="resend-link-btn" onClick={sendOtp} disabled={loading}>
+                      Resend Code
+                    </button>
+                  </div>
+
+                  <button className="back-link-btn" onClick={() => setStep("MOBILE")}>
+                    ← Change Mobile Number
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
       </div>
-    </div>
+    </AnimatePresence>
   );
 };
 

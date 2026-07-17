@@ -1,8 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import "../styles/Modal.css";
-import moviingTeam from "../assests/Images/moving-team.webp";
 import OtpLogin from "../components/OtpLogin.jsx";
 import { isOtpValid } from "../utils/auth";
+
+const moviingTeam = "/Images/moving-team.webp";
 
 const Modal = ({ isOpen, closeModal, distance, activeTab, shiftingDate, fromAddress, toAddress, selectedCity }) => {
   const navigate = useNavigate();

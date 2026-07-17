@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import signature from "../assests/Images/Signature.png";
+import signature from "../assests/Images/signature.png";
 
 export const generateBookingConfirmationPDF = async (bookingData) => {
   const {

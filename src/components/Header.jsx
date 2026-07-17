@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Button, Dialog, DialogContent } from "@mui/material";
+import { Phone, Mail, LogIn, Truck, MessageSquare } from "lucide-react";
 import axiosClient from "../AxiosClient.jsx";
 import TrackShipment from "../pages/TrackShipment.jsx";
 import OtpLogin from "../components/OtpLogin.jsx";
@@ -127,76 +128,131 @@ const handleLogoutFromDropdown = () => {
      JSX
   ====================== */
   return (
-    <header>
+    <header className="site-header">
       {/* TOP BAR */}
       <div className="top-bar">
-        <div className="contact-top">
-          <span><i className="fas fa-phone-alt"></i> +91 90715 35535</span>
-          <span>✉ info@packyatra.com</span>
+        <div className="top-bar-container">
+          <div className="contact-top">
+            <span className="contact-item">
+              <Phone size={13} className="contact-icon" />
+              <a href="tel:+919071535535">+91 90715 35535</a>
+            </span>
+            <span className="contact-divider">•</span>
+            <span className="contact-item">
+              <Mail size={13} className="contact-icon" />
+              <a href="mailto:info@packyatra.com">info@packyatra.com</a>
+            </span>
+            <span className="contact-divider-desktop">•</span>
+            <span className="top-bar-tagline">
+              <i className="fas fa-shield-alt" style={{ color: "#22c55e", marginRight: "4px" }}></i>
+              ISO 9001:2015 Certified Relocation
+            </span>
+          </div>
+          <div className="top-bar-right">
+            <UserDropdown onLogout={handleLogoutFromDropdown} />
+          </div>
         </div>
-        <UserDropdown onLogout={handleLogoutFromDropdown} />
       </div>
 
       {/* HEADER */}
       <div className="header">
-        {/* LOGO */}
-        <div className="logo-container">
-          <div className="logo-main">PACKYATRA</div>
-          <div className="logo-sub">Relocation Pvt.Ltd</div>
+        <div className="header-container">
+          {/* LOGO */}
+          <div className="logo-container" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
+            <div className="logo-icon-wrapper">
+              <Truck className="logo-icon" size={24} />
+            </div>
+            <div className="logo-text-wrapper">
+              <span className="logo-brand-pack">PACK</span>
+              <span className="logo-brand-yatra">YATRA</span>
+              <span className="logo-brand-sub">Relocation Pvt. Ltd.</span>
+            </div>
+          </div>
+
+          {/* DESKTOP NAV */}
+          <nav className="desktop-nav">
+            <NavLink to="/" end className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+              Home
+            </NavLink>
+            <NavLink to="/about" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+              About
+            </NavLink>
+            <NavLink to="/contact" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+              Contact
+            </NavLink>
+          </nav>
+
+          {/* DESKTOP ACTIONS */}
+          <div className="header-actions">
+            {!user ? (
+              <button className="header-login-btn" onClick={openLogin}>
+                <LogIn size={14} />
+                <span>Login / Signup</span>
+              </button>
+            ) : (
+              <span className="user-logged-badge">
+                <span className="status-dot"></span>
+                Logged In
+              </span>
+            )}
+          </div>
+
+          {/* HAMBURGER */}
+          <button
+            className={`mobile-menu-btn ${menuOpen ? "open" : ""}`}
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle Menu"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
         </div>
-
-        {/* DESKTOP NAV */}
-        <nav className="desktop-nav">
-          <NavLink to="/">Home</NavLink>
-          <NavLink to="/about">About</NavLink>
-          <NavLink to="/contact">Contact</NavLink>
-        </nav>
-
-        {/* HAMBURGER */}
-        <button
-          className={`mobile-menu-btn ${menuOpen ? "open" : ""}`}
-          onClick={() => setMenuOpen(!menuOpen)}
-        >
-          <span />
-          <span />
-          <span />
-        </button>
 
         {/* OVERLAY */}
         {menuOpen && <div className="menu-overlay" onClick={() => setMenuOpen(false)} />}
 
         {/* MOBILE MENU */}
         <nav className={`nav-container ${menuOpen ? "active" : ""}`}>
-          <ul>
-            <li><NavLink to="/" onClick={() => setMenuOpen(false)}>Home</NavLink></li>
-            <li><NavLink to="/about" onClick={() => setMenuOpen(false)}>About</NavLink></li>
-            <li><NavLink to="/contact" onClick={() => setMenuOpen(false)}>Contact</NavLink></li>
+          <div className="mobile-menu-header">
+            <div className="logo-container">
+              <span className="logo-brand-pack">PACK</span>
+              <span className="logo-brand-yatra">YATRA</span>
+            </div>
+          </div>
+          <ul className="mobile-nav-links">
             <li>
+              <NavLink to="/" onClick={() => setMenuOpen(false)} className={({ isActive }) => isActive ? "active" : ""}>
+                Home
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/about" onClick={() => setMenuOpen(false)} className={({ isActive }) => isActive ? "active" : ""}>
+                About Us
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/contact" onClick={() => setMenuOpen(false)} className={({ isActive }) => isActive ? "active" : ""}>
+                Contact Support
+              </NavLink>
+            </li>
+            <li className="whatsapp-li">
               <a href="https://wa.me/9071535535" target="_blank" rel="noreferrer" className="whatsapp-cta">
-                🟢 Continue on WhatsApp
+                <MessageSquare size={16} />
+                <span>Continue on WhatsApp</span>
               </a>
             </li>
           </ul>
 
           <div className="mobile-actions">
-             {!user && <button onClick={openLogin}>Login</button>}
-            {/* <button onClick={openTrackShipment}>Track Shipment</button> */}
-            {/* {user ? (
-              
-              <button onClick={handleLogout}>Logout</button>
-            ) 
-            :(
-              <button onClick={openLogin}>Login</button>
-            )
-            } */}
+            {!user && (
+              <button className="mobile-login-btn" onClick={openLogin}>
+                <LogIn size={16} />
+                <span>Login / Signup</span>
+              </button>
+            )}
           </div>
         </nav>
-
-        {/* DESKTOP ACTIONS */}
-        <div className="header-actions">
-           {!user && <Button onClick={openLogin}>Login</Button>}
-        
-        </div>
       </div>
 
       {/* LOGIN MODAL */}
