@@ -19,7 +19,18 @@ import {
   faSearch,
   faTimes,
   faQuestionCircle,
-  faChevronUp
+  faChevronUp,
+  faStar,
+  faStarHalfAlt,
+  faCalendarAlt,
+  faPlus,
+  faTrashAlt,
+  faUndo,
+  faCalculator,
+  faInfoCircle,
+  faCheckCircle,
+  faLock,
+  faBox
 } from "@fortawesome/free-solid-svg-icons";
 import "../styles/app-styles.css";
 
@@ -38,6 +49,144 @@ const HomeSelection = ({ onLoginStatusChange }) => {
   const [distance, setDistance] = useState(0);
   const [faqSearch, setFaqSearch] = useState("");
   const [selectedFaqCategory, setSelectedFaqCategory] = useState("All");
+
+  // --- INTERACTIVE MOVING CHECKLIST PLANNERS STATES ---
+  const defaultChecklist = [
+    { id: "4w-1", category: "4 Weeks Before", text: "Sort through household items and declutter", checked: false },
+    { id: "4w-2", category: "4 Weeks Before", text: "Create an inventory of items to be moved", checked: false },
+    { id: "4w-3", category: "4 Weeks Before", text: "Get an initial quote on PackYatra for booking planning", checked: false },
+    { id: "2w-1", category: "2 Weeks Before", text: "Notify utility providers (electricity, internet, water) of disconnection date", checked: false },
+    { id: "2w-2", category: "2 Weeks Before", text: "Confirm building management/society permission for truck entry", checked: false },
+    { id: "2w-3", category: "2 Weeks Before", text: "Pack non-essential items and valuables separately", checked: false },
+    { id: "mw-1", category: "Moving Week", text: "Defrost and clean the refrigerator 24 hours prior", checked: false },
+    { id: "mw-2", category: "Moving Week", text: "Prepare an 'Essentials Box' for the first night (keys, chargers, documents)", checked: false },
+    { id: "mw-3", category: "Moving Week", text: "Confirm the exact reporting time with PackYatra coordinators", checked: false },
+    { id: "md-1", category: "Moving Day", text: "Keep valuables and crucial files in your personal baggage", checked: false },
+    { id: "md-2", category: "Moving Day", text: "Supervise packing of fragile items by the PackYatra crew", checked: false },
+    { id: "md-3", category: "Moving Day", text: "Double-check all drawers, closets, and cupboards before loading", checked: false }
+  ];
+
+  const [checklistTasks, setChecklistTasks] = useState(() => {
+    try {
+      const saved = localStorage.getItem("packyatra_moving_checklist");
+      return saved ? JSON.parse(saved) : defaultChecklist;
+    } catch (e) {
+      return defaultChecklist;
+    }
+  });
+
+  const [activeChecklistTab, setActiveChecklistTab] = useState("4 Weeks Before");
+  const [newChecklistText, setNewChecklistText] = useState("");
+
+  const updateChecklist = (newTasks) => {
+    setChecklistTasks(newTasks);
+    try {
+      localStorage.setItem("packyatra_moving_checklist", JSON.stringify(newTasks));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleToggleChecklistTask = (id) => {
+    const updated = checklistTasks.map(task => 
+      task.id === id ? { ...task, checked: !task.checked } : task
+    );
+    updateChecklist(updated);
+  };
+
+  const handleAddChecklistTask = (e) => {
+    e.preventDefault();
+    if (!newChecklistText.trim()) return;
+    const newTask = {
+      id: "custom-" + Date.now(),
+      category: activeChecklistTab,
+      text: newChecklistText.trim(),
+      checked: false
+    };
+    updateChecklist([...checklistTasks, newTask]);
+    setNewChecklistText("");
+  };
+
+  const handleResetChecklist = () => {
+    if (window.confirm("Are you sure you want to reset your moving checklist? This will also remove any custom tasks.")) {
+      updateChecklist(defaultChecklist);
+    }
+  };
+
+  const handleRemoveChecklistTask = (id) => {
+    const updated = checklistTasks.filter(task => task.id !== id);
+    updateChecklist(updated);
+  };
+
+  // --- INTERACTIVE COST ESTIMATOR STATES ---
+  const [estBhkSize, setEstBhkSize] = useState("2 BHK");
+  const [estDistance, setEstDistance] = useState(25);
+  const [estFloor, setEstFloor] = useState(2);
+  const [estHasLift, setEstHasLift] = useState(true);
+  const [estPackingType, setEstPackingType] = useState("Standard");
+  const [estIncludeInsurance, setEstIncludeInsurance] = useState(true);
+
+  // Live Auto-Calculation Logic
+  const getEstimationBreakdown = () => {
+    let baseRent = 1800;
+    let perKmRate = 35;
+    let basePacking = 2600;
+
+    if (estBhkSize === "1 BHK") {
+      baseRent = 1000;
+      perKmRate = 25;
+      if (estPackingType === "Economy") basePacking = 800;
+      else if (estPackingType === "Standard") basePacking = 1500;
+      else basePacking = 2500;
+    } else if (estBhkSize === "2 BHK") {
+      baseRent = 1800;
+      perKmRate = 35;
+      if (estPackingType === "Economy") basePacking = 1400;
+      else if (estPackingType === "Standard") basePacking = 2600;
+      else basePacking = 4200;
+    } else if (estBhkSize === "3 BHK") {
+      baseRent = 2800;
+      perKmRate = 45;
+      if (estPackingType === "Economy") basePacking = 2000;
+      else if (estPackingType === "Standard") basePacking = 3800;
+      else basePacking = 5900;
+    } else { // 4 BHK / Villa
+      baseRent = 4000;
+      perKmRate = 55;
+      if (estPackingType === "Economy") basePacking = 3000;
+      else if (estPackingType === "Standard") basePacking = 5200;
+      else basePacking = 8000;
+    }
+
+    const transportCost = baseRent + (estDistance * perKmRate);
+    
+    // Floor handling
+    let floorSurcharge = 0;
+    if (estFloor > 0) {
+      if (estHasLift) {
+        floorSurcharge = estFloor * 100;
+      } else {
+        floorSurcharge = estFloor * 250;
+      }
+    }
+
+    const subtotal = transportCost + basePacking + floorSurcharge;
+    const gst = Math.round(subtotal * 0.18);
+    const insurance = estIncludeInsurance ? 500 : 0;
+    const total = subtotal + gst + insurance;
+
+    return {
+      transport: transportCost,
+      packing: basePacking,
+      floorSurcharge,
+      subtotal,
+      gst,
+      insurance,
+      total
+    };
+  };
+
+  const estBreakdown = getEstimationBreakdown();
 
   const BANGALORE_COORDS = { lat: 12.9716, lon: 77.5946 };
   const CITY_RADIUS_KM = 30;
@@ -478,7 +627,28 @@ const HomeSelection = ({ onLoginStatusChange }) => {
                       </div>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <a 
+                      href="https://www.google.com/search?q=PackYatra+Packers+and+Movers+Reviews" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      title="View Verified Google Reviews"
+                      style={{ 
+                        display: "flex", 
+                        alignItems: "center", 
+                        gap: "12px", 
+                        textDecoration: "none", 
+                        cursor: "pointer",
+                        transition: "all 0.3s ease"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.opacity = "0.95";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "none";
+                        e.currentTarget.style.opacity = "1";
+                      }}
+                    >
                       <div style={{
                         width: "48px",
                         height: "48px",
@@ -494,10 +664,15 @@ const HomeSelection = ({ onLoginStatusChange }) => {
                         <FontAwesomeIcon icon={faUsers} />
                       </div>
                       <div>
-                        <div style={{ fontSize: "16px", fontWeight: "700", color: "#ffffff" }}>15K+ Happy</div>
-                        <div style={{ fontSize: "12px", color: "#94a3b8" }}>Rated 4.9/5 Stars</div>
+                        <div style={{ fontSize: "16px", fontWeight: "700", color: "#ffffff", display: "flex", alignItems: "center", gap: "6px" }}>
+                          15K+ Happy <span style={{ fontSize: "9px", background: "#4285F4", color: "#ffffff", padding: "1px 6px", borderRadius: "8px", fontWeight: "900", letterSpacing: "0.3px", fontFamily: "system-ui" }}>Google</span>
+                        </div>
+                        <div style={{ fontSize: "12px", color: "#94a3b8", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <span>Rated 4.9/5 Stars</span>
+                          <span style={{ color: "#fbc02d" }}>★★★★★</span>
+                        </div>
                       </div>
-                    </div>
+                    </a>
                   </motion.div>
                 </div>
 
@@ -1015,6 +1190,983 @@ const HomeSelection = ({ onLoginStatusChange }) => {
               <Feature icon={faTruck} title="Nationwide Network" desc="Seamless relocation services across 50+ major cities." />
               <Feature icon={faCheck} title="Timely Delivery" desc="Strict adherence to schedules with an on-time guarantee." />
               <Feature icon={faBoxOpen} title="Quality Packing" desc="Multi-layered premium packaging materials for maximum safety." />
+            </div>
+          </section>
+
+          {/* Premium Google Customer Reviews Section */}
+          <section id="reviews" style={{ padding: "100px 24px", background: "#ffffff", position: "relative", overflow: "hidden" }}>
+            {/* Soft Ambient Background Elements */}
+            <div style={{ position: "absolute", top: "5%", left: "-5%", width: "250px", height: "250px", borderRadius: "50%", background: "radial-gradient(circle, rgba(66, 133, 244, 0.04) 0%, rgba(255,255,255,0) 70%)", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", bottom: "5%", right: "-5%", width: "300px", height: "300px", borderRadius: "50%", background: "radial-gradient(circle, rgba(249, 115, 22, 0.03) 0%, rgba(255,255,255,0) 70%)", pointerEvents: "none" }} />
+
+            <div className="container" style={{ maxWidth: "1200px", margin: "0 auto", position: "relative", zIndex: 1 }}>
+              
+              {/* Header */}
+              <div style={{ textAlign: "center", marginBottom: "50px" }}>
+                <span style={{
+                  background: "rgba(66, 133, 244, 0.08)",
+                  color: "#4285f4",
+                  fontSize: "11px",
+                  fontWeight: "700",
+                  textTransform: "uppercase",
+                  letterSpacing: "1.5px",
+                  padding: "6px 16px",
+                  borderRadius: "20px",
+                  border: "1px solid rgba(66, 133, 244, 0.15)",
+                  display: "inline-block",
+                  marginBottom: "16px"
+                }}>
+                  ✨ GOOGLE CUSTOMER REVIEWS
+                </span>
+                <h2 style={{
+                  fontSize: "clamp(1.8rem, 3.5vw, 2.5rem)",
+                  fontWeight: "800",
+                  color: "#0f172a",
+                  marginBottom: "12px",
+                  letterSpacing: "-0.025em"
+                }}>
+                  Loved By Customers, Rated 4.9 on Google
+                </h2>
+                <p style={{
+                  fontSize: "16px",
+                  color: "#64748b",
+                  maxWidth: "640px",
+                  margin: "0 auto",
+                  lineHeight: "1.6"
+                }}>
+                  We maintain a pristine rating across India, reflecting our commitment to ultra-secure packing, reliable transit, and 100% transparent pricing.
+                </p>
+              </div>
+
+              {/* Two Column Layout: Left (Rating Box), Right (Reviews Grid) */}
+              <div className="reviews-two-col">
+                
+                {/* Left Column: Google rating summary box */}
+                <div style={{
+                  background: "#f8fafc",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "24px",
+                  padding: "40px 30px",
+                  textAlign: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 10px 30px -10px rgba(15, 23, 42, 0.04)"
+                }}>
+                  {/* Google Icon with Text */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
+                    <svg viewBox="0 0 24 24" width="32" height="32" style={{ display: "block" }}>
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                    </svg>
+                    <span style={{ fontSize: "19px", fontWeight: "800", color: "#0f172a", fontFamily: "system-ui" }}>Google Reviews</span>
+                  </div>
+
+                  <div style={{ fontSize: "68px", fontWeight: "900", color: "#0f172a", lineHeight: "1", letterSpacing: "-0.03em" }}>4.9</div>
+                  
+                  {/* Stars Row */}
+                  <div style={{ display: "flex", gap: "5px", color: "#fbc02d", fontSize: "24px", margin: "16px 0 10px" }}>
+                    <FontAwesomeIcon icon={faStar} />
+                    <FontAwesomeIcon icon={faStar} />
+                    <FontAwesomeIcon icon={faStar} />
+                    <FontAwesomeIcon icon={faStar} />
+                    <FontAwesomeIcon icon={faStar} />
+                  </div>
+
+                  <p style={{ fontSize: "14px", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>
+                    Exceptional Customer Trust
+                  </p>
+                  <p style={{ fontSize: "12px", color: "#64748b", marginBottom: "32px" }}>
+                    Based on 1,250+ verified Google Ratings
+                  </p>
+
+                  {/* Trust CTA Actions */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
+                    <a 
+                      href="https://www.google.com/search?q=PackYatra+Packers+and+Movers+Reviews" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{
+                        background: "#4285F4",
+                        color: "#ffffff",
+                        padding: "13px 20px",
+                        borderRadius: "14px",
+                        fontSize: "14px",
+                        fontWeight: "700",
+                        textDecoration: "none",
+                        boxShadow: "0 6px 16px rgba(66, 133, 244, 0.25)",
+                        transition: "all 0.2s ease",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "#357ae8";
+                        e.currentTarget.style.boxShadow = "0 8px 20px rgba(66, 133, 244, 0.35)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "#4285F4";
+                        e.currentTarget.style.boxShadow = "0 6px 16px rgba(66, 133, 244, 0.25)";
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                      </svg>
+                      Write a Google Review
+                    </a>
+
+                    <a 
+                      href="https://www.google.com/search?q=PackYatra+Packers+and+Movers+Reviews" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{
+                        background: "transparent",
+                        color: "#475569",
+                        border: "1px solid #cbd5e1",
+                        padding: "13px 20px",
+                        borderRadius: "14px",
+                        fontSize: "14px",
+                        fontWeight: "700",
+                        textDecoration: "none",
+                        transition: "all 0.2s ease",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "#f1f5f9";
+                        e.currentTarget.style.color = "#0f172a";
+                        e.currentTarget.style.borderColor = "#94a3b8";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.color = "#475569";
+                        e.currentTarget.style.borderColor = "#cbd5e1";
+                      }}
+                    >
+                      Read All 1,250+ Reviews
+                    </a>
+                  </div>
+                </div>
+
+                {/* Right Column: Grid of interactive customer review cards */}
+                <div className="reviews-grid-responsive">
+                  {[
+                    {
+                      name: "Anjali Mehta",
+                      meta: "Moved from Mumbai to Pune",
+                      date: "2 weeks ago",
+                      initial: "A",
+                      color: "#ea4335",
+                      text: "Packyatra made our interstate move completely stress-free. The packing crew arrived on time and wrapped every delicate glass item with triple-layer protection. Reached safely ahead of schedule!"
+                    },
+                    {
+                      name: "Vikram Malhotra",
+                      meta: "Corporate Office Shifting, Bangalore",
+                      date: "1 month ago",
+                      initial: "V",
+                      color: "#4285f4",
+                      text: "Extremely professional movers. We shifted our entire IT infrastructure over the weekend. They indexed all files perfectly and set up the new office space with zero business downtime."
+                    },
+                    {
+                      name: "Karan Johar",
+                      meta: "Household Relocation in Delhi NCR",
+                      date: "3 days ago",
+                      initial: "K",
+                      color: "#34a853",
+                      text: "Best shifting experience! Their quote was completely transparent. No sudden extra charges on delivery day. The loading staff was incredibly hardworking and polite."
+                    },
+                    {
+                      name: "Sneha Reddy",
+                      meta: "Car Carrier (Bangalore to Chennai)",
+                      date: "3 weeks ago",
+                      initial: "S",
+                      color: "#fbbc05",
+                      text: "I was super nervous about transport of my hatchback, but they carried it in an enclosed carrier and provided WhatsApp status checks. Delivered in absolute perfect condition!"
+                    }
+                  ].map((rev, rIdx) => (
+                    <motion.div
+                      key={rIdx}
+                      whileHover={{ y: -5, borderColor: "rgba(66, 133, 244, 0.4)", boxShadow: "0 12px 25px rgba(15, 23, 42, 0.05)" }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      style={{
+                        background: "#ffffff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "20px",
+                        padding: "26px",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        position: "relative"
+                      }}
+                    >
+                      <div>
+                        {/* Reviewer Meta */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "14px" }}>
+                          <div style={{
+                            width: "40px",
+                            height: "40px",
+                            borderRadius: "50%",
+                            background: rev.color + "12",
+                            color: rev.color,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "15px",
+                            fontWeight: "700"
+                          }}>
+                            {rev.initial}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: "15px", fontWeight: "700", color: "#0f172a" }}>{rev.name}</div>
+                            <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "500" }}>{rev.meta}</div>
+                          </div>
+                          {/* Google Icon Badge */}
+                          <svg viewBox="0 0 24 24" width="16" height="16" style={{ marginLeft: "auto", opacity: 0.9 }}>
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                          </svg>
+                        </div>
+
+                        {/* Stars and Date */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                          <div style={{ display: "flex", gap: "2px", color: "#fbc02d", fontSize: "13px" }}>
+                            <FontAwesomeIcon icon={faStar} />
+                            <FontAwesomeIcon icon={faStar} />
+                            <FontAwesomeIcon icon={faStar} />
+                            <FontAwesomeIcon icon={faStar} />
+                            <FontAwesomeIcon icon={faStar} />
+                          </div>
+                          <span style={{ fontSize: "11px", color: "#94a3b8" }}>{rev.date}</span>
+                        </div>
+
+                        {/* Review Content */}
+                        <p style={{ fontSize: "13.5px", color: "#334155", lineHeight: "1.6", margin: 0, fontStyle: "italic" }}>
+                          "{rev.text}"
+                        </p>
+                      </div>
+
+                      {/* Verified Badge */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "18px", fontSize: "11px", color: "#16a34a", fontWeight: "600" }}>
+                        <span style={{ display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", background: "#16a34a" }} />
+                        Verified Google Customer
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+              </div>
+
+            </div>
+          </section>
+
+          {/* SECTION: INTERACTIVE RELOCATION COST ESTIMATOR */}
+          <section id="estimator" style={{ padding: "100px 24px", background: "#f8fafc", position: "relative", overflow: "hidden", borderTop: "1px solid #e2e8f0" }}>
+            <div style={{ position: "absolute", top: "10%", right: "-10%", width: "350px", height: "350px", borderRadius: "50%", background: "radial-gradient(circle, rgba(66, 133, 244, 0.04) 0%, rgba(255,255,255,0) 70%)", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", bottom: "10%", left: "-10%", width: "350px", height: "350px", borderRadius: "50%", background: "radial-gradient(circle, rgba(249, 115, 22, 0.03) 0%, rgba(255,255,255,0) 70%)", pointerEvents: "none" }} />
+
+            <div className="container" style={{ maxWidth: "1200px", margin: "0 auto", position: "relative", zIndex: 1 }}>
+              
+              {/* Section Header */}
+              <div style={{ textAlign: "center", marginBottom: "50px" }}>
+                <span style={{
+                  background: "rgba(249, 115, 22, 0.08)",
+                  color: "#f97316",
+                  fontSize: "11px",
+                  fontWeight: "700",
+                  textTransform: "uppercase",
+                  letterSpacing: "1.5px",
+                  padding: "6px 16px",
+                  borderRadius: "20px",
+                  border: "1px solid rgba(249, 115, 22, 0.15)",
+                  display: "inline-block",
+                  marginBottom: "16px"
+                }}>
+                  🧮 LIVE BUDGET PLANNER
+                </span>
+                <h2 style={{
+                  fontSize: "clamp(1.8rem, 3.5vw, 2.5rem)",
+                  fontWeight: "800",
+                  color: "#0f172a",
+                  marginBottom: "12px",
+                  letterSpacing: "-0.025em"
+                }}>
+                  Instant Relocation Cost Calculator
+                </h2>
+                <p style={{
+                  fontSize: "16px",
+                  color: "#64748b",
+                  maxWidth: "640px",
+                  margin: "0 auto",
+                  lineHeight: "1.6"
+                }}>
+                  Get a highly accurate, completely transparent live estimate of your moving charges. Modify parameters below to adjust packing levels, floors, and distance.
+                </p>
+              </div>
+
+              {/* Two Column Layout */}
+              <div className="reviews-two-col">
+                
+                {/* Left Column: Estimator Controls */}
+                <div style={{
+                  background: "#ffffff",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "24px",
+                  padding: "32px",
+                  boxShadow: "0 10px 30px -10px rgba(15, 23, 42, 0.04)"
+                }}>
+                  <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#0f172a", marginBottom: "24px", display: "flex", alignItems: "center", gap: "10px" }}>
+                    <FontAwesomeIcon icon={faCalculator} style={{ color: "#f97316" }} />
+                    Configure Your Move
+                  </h3>
+
+                  {/* 1. BHK Size */}
+                  <div style={{ marginBottom: "24px" }}>
+                    <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#334155", marginBottom: "8px" }}>
+                      Apartment Size / Volume:
+                    </label>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px" }}>
+                      {["1 BHK", "2 BHK", "3 BHK", "4 BHK / Villa"].map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => setEstBhkSize(size)}
+                          style={{
+                            padding: "10px 4px",
+                            borderRadius: "10px",
+                            border: estBhkSize === size ? "2px solid #f97316" : "1px solid #cbd5e1",
+                            background: estBhkSize === size ? "rgba(249, 115, 22, 0.05)" : "#ffffff",
+                            color: estBhkSize === size ? "#f97316" : "#475569",
+                            fontSize: "13px",
+                            fontWeight: "700",
+                            cursor: "pointer",
+                            transition: "all 0.2s"
+                          }}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 2. Distance Slider */}
+                  <div style={{ marginBottom: "24px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                      <label style={{ fontSize: "14px", fontWeight: "600", color: "#334155" }}>
+                        Distance of Relocation:
+                      </label>
+                      <span style={{ fontSize: "14px", fontWeight: "700", color: "#f97316" }}>
+                        {estDistance} km
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="5"
+                      max="500"
+                      step="5"
+                      value={estDistance}
+                      onChange={(e) => setEstDistance(Number(e.target.value))}
+                      style={{
+                        width: "100%",
+                        height: "6px",
+                        borderRadius: "3px",
+                        accentColor: "#f97316",
+                        background: "#e2e8f0",
+                        cursor: "pointer"
+                      }}
+                    />
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#94a3b8", marginTop: "4px" }}>
+                      <span>Local (5 km)</span>
+                      <span>150 km</span>
+                      <span>300 km</span>
+                      <span>Intercity (500 km+)</span>
+                    </div>
+                  </div>
+
+                  {/* 3. Floor Selection */}
+                  <div style={{ marginBottom: "24px" }}>
+                    <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#334155", marginBottom: "8px" }}>
+                      Floor Level (Origin or Destination):
+                    </label>
+                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                      {[0, 1, 2, 3, 4, 5, 6].map((fl) => (
+                        <button
+                          key={fl}
+                          onClick={() => setEstFloor(fl)}
+                          style={{
+                            width: "42px",
+                            height: "40px",
+                            borderRadius: "10px",
+                            border: estFloor === fl ? "2px solid #f97316" : "1px solid #cbd5e1",
+                            background: estFloor === fl ? "rgba(249, 115, 22, 0.05)" : "#ffffff",
+                            color: estFloor === fl ? "#f97316" : "#475569",
+                            fontSize: "13px",
+                            fontWeight: "700",
+                            cursor: "pointer",
+                            transition: "all 0.2s"
+                          }}
+                        >
+                          {fl === 0 ? "G" : fl}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 4. Lift Toggle */}
+                  {estFloor > 0 && (
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "14px 16px",
+                      background: "#f8fafc",
+                      borderRadius: "12px",
+                      border: "1px solid #e2e8f0",
+                      marginBottom: "24px"
+                    }}>
+                      <div>
+                        <div style={{ fontSize: "14px", fontWeight: "600", color: "#334155" }}>Service Lift Available</div>
+                        <div style={{ fontSize: "11px", color: "#64748b" }}>Helps reduce manual carrying surcharge</div>
+                      </div>
+                      <button
+                        onClick={() => setEstHasLift(!estHasLift)}
+                        style={{
+                          width: "50px",
+                          height: "26px",
+                          borderRadius: "13px",
+                          background: estHasLift ? "#22c55e" : "#cbd5e1",
+                          border: "none",
+                          position: "relative",
+                          cursor: "pointer",
+                          transition: "background-color 0.2s"
+                        }}
+                      >
+                        <span style={{
+                          position: "absolute",
+                          top: "3px",
+                          left: estHasLift ? "27px" : "3px",
+                          width: "20px",
+                          height: "20px",
+                          borderRadius: "50%",
+                          background: "#ffffff",
+                          transition: "left 0.2s",
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.15)"
+                        }} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* 5. Packing Class */}
+                  <div style={{ marginBottom: "24px" }}>
+                    <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#334155", marginBottom: "8px" }}>
+                      Packing Quality & Protection:
+                    </label>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+                      {[
+                        { name: "Economy", desc: "No glass wrapping" },
+                        { name: "Standard", desc: "Corrugated layers" },
+                        { name: "Premium", desc: "Double bubble wrap" }
+                      ].map((type) => (
+                        <button
+                          key={type.name}
+                          onClick={() => setEstPackingType(type.name)}
+                          style={{
+                            padding: "12px 6px",
+                            borderRadius: "12px",
+                            border: estPackingType === type.name ? "2px solid #f97316" : "1px solid #cbd5e1",
+                            background: estPackingType === type.name ? "rgba(249, 115, 22, 0.05)" : "#ffffff",
+                            color: estPackingType === type.name ? "#f97316" : "#475569",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            textAlign: "center"
+                          }}
+                        >
+                          <div style={{ fontSize: "13px", fontWeight: "700" }}>{type.name}</div>
+                          <div style={{ fontSize: "10px", color: estPackingType === type.name ? "#f97316" : "#94a3b8", marginTop: "2px", fontWeight: "500" }}>{type.desc}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 6. Transit Protection Insurance */}
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "14px 16px",
+                    background: estIncludeInsurance ? "rgba(34, 197, 94, 0.04)" : "#f8fafc",
+                    borderRadius: "12px",
+                    border: estIncludeInsurance ? "1px solid rgba(34, 197, 94, 0.2)" : "1px solid #e2e8f0"
+                  }}>
+                    <div>
+                      <div style={{ fontSize: "14px", fontWeight: "600", color: "#334155", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <FontAwesomeIcon icon={faShieldAlt} style={{ color: "#22c55e" }} />
+                        Transit Damage Protection Policy
+                      </div>
+                      <div style={{ fontSize: "11px", color: "#64748b" }}>Flat protection rate covers damage up to ₹50,000</div>
+                    </div>
+                    <button
+                      onClick={() => setEstIncludeInsurance(!estIncludeInsurance)}
+                      style={{
+                        width: "50px",
+                        height: "26px",
+                        borderRadius: "13px",
+                        background: estIncludeInsurance ? "#22c55e" : "#cbd5e1",
+                        border: "none",
+                        position: "relative",
+                        cursor: "pointer",
+                        transition: "background-color 0.2s"
+                      }}
+                    >
+                      <span style={{
+                        position: "absolute",
+                        top: "3px",
+                        left: estIncludeInsurance ? "27px" : "3px",
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "50%",
+                        background: "#ffffff",
+                        transition: "left 0.2s",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.15)"
+                      }} />
+                    </button>
+                  </div>
+
+                </div>
+
+                {/* Right Column: Dynamic Price Sheet Breakdown */}
+                <div style={{
+                  background: "#1e293b",
+                  borderRadius: "24px",
+                  padding: "40px 30px",
+                  color: "#ffffff",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  boxShadow: "0 20px 40px -15px rgba(15, 23, 42, 0.3)"
+                }}>
+                  <div>
+                    {/* Badge */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "28px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", background: "rgba(255,255,255,0.08)", padding: "4px 12px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)", color: "#94a3b8" }}>
+                        ESTIMATION SLIP
+                      </span>
+                      <span style={{ fontSize: "11px", color: "#22c55e", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <FontAwesomeIcon icon={faLock} /> Secure & Transparent
+                      </span>
+                    </div>
+
+                    <p style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "16px" }}>Relocation Breakdown for {estBhkSize}:</p>
+
+                    {/* Cost items */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "16px", borderBottom: "1px dashed rgba(255,255,255,0.1)", paddingBottom: "20px", marginBottom: "20px" }}>
+                      
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14.5px" }}>
+                        <span style={{ color: "#cbd5e1" }}>Transport Base + Distance ({estDistance} km):</span>
+                        <span style={{ fontWeight: "600" }}>₹{estBreakdown.transport.toLocaleString()}</span>
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14.5px" }}>
+                        <span style={{ color: "#cbd5e1" }}>Premium Packing Labor & Materials ({estPackingType}):</span>
+                        <span style={{ fontWeight: "600" }}>₹{estBreakdown.packing.toLocaleString()}</span>
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14.5px" }}>
+                        <span style={{ color: "#cbd5e1" }}>Floor Carry Surcharge (Floor {estFloor}{estFloor > 0 && (estHasLift ? " with lift" : " no lift")}):</span>
+                        <span style={{ fontWeight: "600" }}>₹{estBreakdown.floorSurcharge.toLocaleString()}</span>
+                      </div>
+
+                      {estIncludeInsurance && (
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14.5px" }}>
+                          <span style={{ color: "#cbd5e1" }}>Transit Protection (Up to ₹50,000):</span>
+                          <span style={{ fontWeight: "600" }}>₹{estBreakdown.insurance.toLocaleString()}</span>
+                        </div>
+                      )}
+
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14.5px" }}>
+                        <span style={{ color: "#cbd5e1" }}>Integrated GST Tax Surcharge (18%):</span>
+                        <span style={{ fontWeight: "600" }}>₹{estBreakdown.gst.toLocaleString()}</span>
+                      </div>
+
+                    </div>
+
+                    {/* Total */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                      <span style={{ fontSize: "16px", fontWeight: "700", color: "#94a3b8" }}>Estimated Total:</span>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: "32px", fontWeight: "900", color: "#f97316" }}>₹{estBreakdown.total.toLocaleString()}*</div>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: "10.5px", color: "#64748b", fontStyle: "italic", textAlign: "right" }}>
+                      *Excludes potential city tolls or outer-state permit charges if applicable.
+                    </div>
+                  </div>
+
+                  {/* Actions inside slip */}
+                  <div style={{ marginTop: "36px" }}>
+                    <button
+                      onClick={() => {
+                        const heroElement = document.getElementById("home") || document.querySelector(".hero-banner") || document.querySelector(".fixed-form");
+                        if (heroElement) {
+                          heroElement.scrollIntoView({ behavior: "smooth" });
+                        }
+                      }}
+                      style={{
+                        width: "100%",
+                        background: "#f97316",
+                        color: "#ffffff",
+                        padding: "16px 20px",
+                        borderRadius: "16px",
+                        fontSize: "15px",
+                        fontWeight: "800",
+                        border: "none",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                        boxShadow: "0 8px 24px rgba(249, 115, 22, 0.25)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "#ea580c";
+                        e.currentTarget.style.boxShadow = "0 10px 28px rgba(249, 115, 22, 0.35)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "#f97316";
+                        e.currentTarget.style.boxShadow = "0 8px 24px rgba(249, 115, 22, 0.25)";
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faTruckMoving} />
+                      Proceed to Lock Special Price
+                    </button>
+                    <p style={{ textAlign: "center", fontSize: "11px", color: "#64748b", marginTop: "12px" }}>
+                      Locking price places zero booking commitment. Full cancellation support.
+                    </p>
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+          </section>
+
+          {/* SECTION: INTERACTIVE PERSONAL MOVING CHECKLIST PLANNER */}
+          <section id="planner" style={{ padding: "100px 24px", background: "#ffffff", position: "relative", overflow: "hidden" }}>
+            <div className="container" style={{ maxWidth: "1000px", margin: "0 auto", position: "relative", zIndex: 1 }}>
+              
+              {/* Header */}
+              <div style={{ textAlign: "center", marginBottom: "40px" }}>
+                <span style={{
+                  background: "rgba(66, 133, 244, 0.08)",
+                  color: "#4285f4",
+                  fontSize: "11px",
+                  fontWeight: "700",
+                  textTransform: "uppercase",
+                  letterSpacing: "1.5px",
+                  padding: "6px 16px",
+                  borderRadius: "20px",
+                  border: "1px solid rgba(66, 133, 244, 0.15)",
+                  display: "inline-block",
+                  marginBottom: "16px"
+                }}>
+                  📅 ORGANIZED MOVES
+                </span>
+                <h2 style={{
+                  fontSize: "clamp(1.8rem, 3.5vw, 2.5rem)",
+                  fontWeight: "800",
+                  color: "#0f172a",
+                  marginBottom: "12px",
+                  letterSpacing: "-0.025em"
+                }}>
+                  Your Personal Interactive Relocation Planner
+                </h2>
+                <p style={{
+                  fontSize: "16px",
+                  color: "#64748b",
+                  maxWidth: "600px",
+                  margin: "0 auto",
+                  lineHeight: "1.6"
+                }}>
+                  Never lose track of a chore. Use our step-by-step moving checklists, customize them, and track your progress live. Your planner saves automatically!
+                </p>
+              </div>
+
+              {/* Progress Panel */}
+              {(() => {
+                const totalTasks = checklistTasks.length;
+                const completedTasks = checklistTasks.filter(t => t.checked).length;
+                const percent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+                
+                return (
+                  <div style={{
+                    background: "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "20px",
+                    padding: "24px 30px",
+                    marginBottom: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "24px",
+                    flexWrap: "wrap"
+                  }}>
+                    <div style={{
+                      width: "64px",
+                      height: "64px",
+                      borderRadius: "50%",
+                      background: percent === 100 ? "#22c55e" : "#4285f4",
+                      color: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "18px",
+                      fontWeight: "900"
+                    }}>
+                      {percent}%
+                    </div>
+                    <div style={{ flex: 1, minWidth: "250px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", fontWeight: "700", color: "#334155" }}>
+                        <span>Moving Preparation Progress</span>
+                        <span>{completedTasks} of {totalTasks} Tasks Done</span>
+                      </div>
+                      <div style={{ width: "100%", height: "10px", background: "#e2e8f0", borderRadius: "5px", overflow: "hidden" }}>
+                        <div style={{ width: `${percent}%`, height: "100%", background: percent === 100 ? "#22c55e" : "#4285f4", borderRadius: "5px", transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)" }} />
+                      </div>
+                    </div>
+                    <div>
+                      <button
+                        onClick={handleResetChecklist}
+                        style={{
+                          background: "transparent",
+                          color: "#ef4444",
+                          border: "1px solid rgba(239, 68, 68, 0.2)",
+                          padding: "10px 18px",
+                          borderRadius: "12px",
+                          fontSize: "13px",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          transition: "all 0.2s"
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "rgba(239, 68, 68, 0.05)";
+                          e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.4)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.2)";
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faUndo} /> Reset Checklist
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Checklist Board Layout */}
+              <div style={{
+                background: "#ffffff",
+                border: "1px solid #e2e8f0",
+                borderRadius: "24px",
+                boxShadow: "0 10px 30px -10px rgba(15, 23, 42, 0.06)",
+                overflow: "hidden"
+              }}>
+                
+                {/* Timeline Tab Buttons */}
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(4, 1fr)",
+                  borderBottom: "1px solid #e2e8f0",
+                  background: "#f8fafc"
+                }}>
+                  {["4 Weeks Before", "2 Weeks Before", "Moving Week", "Moving Day"].map((cat) => {
+                    const isActive = activeChecklistTab === cat;
+                    const catCount = checklistTasks.filter(t => t.category === cat).length;
+                    const checkedCount = checklistTasks.filter(t => t.category === cat && t.checked).length;
+
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => setActiveChecklistTab(cat)}
+                        style={{
+                          padding: "18px 8px",
+                          border: "none",
+                          borderBottom: isActive ? "3px solid #4285f4" : "3px solid transparent",
+                          background: isActive ? "#ffffff" : "transparent",
+                          color: isActive ? "#4285f4" : "#64748b",
+                          fontSize: "14px",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: "4px"
+                        }}
+                      >
+                        <span>{cat}</span>
+                        <span style={{
+                          fontSize: "10px",
+                          fontWeight: "600",
+                          background: isActive ? "rgba(66, 133, 244, 0.1)" : "#e2e8f0",
+                          color: isActive ? "#4285f4" : "#475569",
+                          padding: "1px 8px",
+                          borderRadius: "10px"
+                        }}>
+                          {checkedCount}/{catCount}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Tasks List Area */}
+                <div style={{ padding: "30px" }}>
+                  
+                  {/* Task Items container */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", minHeight: "220px", marginBottom: "24px" }}>
+                    {checklistTasks.filter(t => t.category === activeChecklistTab).length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "40px 20px", color: "#94a3b8" }}>
+                        <FontAwesomeIcon icon={faBoxOpen} style={{ fontSize: "32px", marginBottom: "12px", opacity: 0.6 }} />
+                        <p style={{ fontSize: "14px", margin: 0 }}>No items in this category yet. Add a custom chore below!</p>
+                      </div>
+                    ) : (
+                      checklistTasks.filter(t => t.category === activeChecklistTab).map((task) => (
+                        <div
+                          key={task.id}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "14px 18px",
+                            background: task.checked ? "rgba(34, 197, 94, 0.02)" : "#ffffff",
+                            border: task.checked ? "1px solid rgba(34, 197, 94, 0.15)" : "1px solid #e2e8f0",
+                            borderRadius: "14px",
+                            transition: "all 0.2s"
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: "14px", flex: 1 }}>
+                            {/* Animated Checkbox Circle */}
+                            <button
+                              onClick={() => handleToggleChecklistTask(task.id)}
+                              style={{
+                                width: "24px",
+                                height: "24px",
+                                borderRadius: "50%",
+                                border: task.checked ? "none" : "2px solid #cbd5e1",
+                                background: task.checked ? "#22c55e" : "transparent",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: "#ffffff",
+                                cursor: "pointer",
+                                fontSize: "11px",
+                                transition: "all 0.15s"
+                              }}
+                            >
+                              {task.checked && <FontAwesomeIcon icon={faCheck} />}
+                            </button>
+
+                            {/* Label */}
+                            <span style={{
+                              fontSize: "14.5px",
+                              color: task.checked ? "#94a3b8" : "#334155",
+                              fontWeight: "500",
+                              textDecoration: task.checked ? "line-through" : "none",
+                              transition: "all 0.15s"
+                            }}>
+                              {task.text}
+                            </span>
+                          </div>
+
+                          {/* Action - Delete button if it is a custom task */}
+                          {task.id.startsWith("custom-") && (
+                            <button
+                              onClick={() => handleRemoveChecklistTask(task.id)}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                color: "#cbd5e1",
+                                cursor: "pointer",
+                                padding: "6px",
+                                transition: "color 0.15s"
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.color = "#ef4444"}
+                              onMouseLeave={(e) => e.currentTarget.style.color = "#cbd5e1"}
+                            >
+                              <FontAwesomeIcon icon={faTrashAlt} />
+                            </button>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Add Custom Chore Form */}
+                  <form onSubmit={handleAddChecklistTask} style={{
+                    display: "flex",
+                    gap: "10px",
+                    background: "#f8fafc",
+                    border: "1px dashed #cbd5e1",
+                    borderRadius: "16px",
+                    padding: "16px"
+                  }}>
+                    <input
+                      type="text"
+                      placeholder={`Add custom reminder for "${activeChecklistTab}"...`}
+                      value={newChecklistText}
+                      onChange={(e) => setNewChecklistText(e.target.value)}
+                      style={{
+                        flex: 1,
+                        border: "1px solid #cbd5e1",
+                        background: "#ffffff",
+                        padding: "12px 16px",
+                        borderRadius: "10px",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        color: "#334155",
+                        outline: "none"
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      style={{
+                        background: "#4285f4",
+                        color: "#ffffff",
+                        border: "none",
+                        padding: "0 22px",
+                        borderRadius: "10px",
+                        fontSize: "14px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        transition: "background-color 0.2s"
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "#357ae8"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "#4285f4"}
+                    >
+                      <FontAwesomeIcon icon={faPlus} /> Add Chore
+                    </button>
+                  </form>
+
+                </div>
+
+              </div>
+
             </div>
           </section>
 

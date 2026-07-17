@@ -395,3 +395,31 @@
     font-size: 14px;
   }
 }
+
+/* ===============================
+   GOOGLE CUSTOMER REVIEWS
+=============================== */
+.reviews-two-col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+}
+
+.reviews-grid-responsive {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 992px) {
+  .reviews-two-col {
+    grid-template-columns: 1fr 2fr;
+    gap: 40px;
+  }
+}
+
+@media (min-width: 640px) {
+  .reviews-grid-responsive {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
