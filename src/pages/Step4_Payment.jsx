@@ -21,7 +21,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Snackbar
+  Snackbar,
+  Chip
 } from "@mui/material";
 import {
   CreditCard,
@@ -32,12 +33,26 @@ import {
   Person,
   Email,
   Phone,
-  Password
+  Password,
+  LocalShipping,
+  ConfirmationNumber,
+  ArrowBack,
+  FileDownloadOutlined
 } from "@mui/icons-material";
 import AxiosClient from "../AxiosClient";
 import { generateBookingConfirmationPDF } from "./generateQuotationPDF";
 import { sendBookingConfirmationEmail } from "./EmailService";
 import { add } from "date-fns/add";
+
+// ---- Design tokens (kept local so this component stays visually consistent
+// wherever it's dropped in, without depending on a shared theme file) ----
+const ink = "#16233B";      // primary navy - headings / high-emphasis text
+const inkSoft = "#4B5A73";  // secondary navy-grey text
+const amber = "#E0872A";    // moving-truck amber - primary accent / CTA
+const amberDark = "#C06E17";
+const paper = "#FBF8F3";    // warm paper background for panels
+const line = "#E7E0D3";     // hairline / divider on warm paper
+const success = "#1F8A57";
 
 const Step4_Payment = ({ bookingData, onUpdate, onNext, onBack, timeSlots = [] }) => {
   const [paymentMethod, setPaymentMethod] = useState("UPI");
@@ -56,24 +71,24 @@ const Step4_Payment = ({ bookingData, onUpdate, onNext, onBack, timeSlots = [] }
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!customerName.trim()) {
       newErrors.name = "Name is required";
     }
-    
+
     if (!customerEmail.trim()) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(customerEmail)) {
       newErrors.email = "Email is invalid";
     }
-    
+
     // Phone is optional for now
     // if (!customerPhone.trim()) {
     //   newErrors.phone = "Phone number is required";
     // } else if (!/^\d{10}$/.test(customerPhone)) {
     //   newErrors.phone = "Phone number must be 10 digits";
     // }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -336,138 +351,263 @@ const handlePayment = async () => {
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: '100%' }}>
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity="error"
+          variant="filled"
+          sx={{ width: '100%', borderRadius: 2, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}
+        >
           {emailError}
         </Alert>
       </Snackbar>
 
       {/* Success Dialog */}
-      <Dialog open={successDialogOpen} onClose={() => {}}>
-        <DialogTitle sx={{ textAlign: 'center', color: 'success.main' }}>
-          <CheckCircle sx={{ fontSize: 60, color: 'success.main', mb: 2, display: 'block', mx: 'auto' }} />
-          Payment Successful!
+      <Dialog
+        open={successDialogOpen}
+        onClose={() => {}}
+        PaperProps={{ sx: { borderRadius: 3, px: 1, py: 1.5, minWidth: 320 } }}
+      >
+        <DialogTitle sx={{ textAlign: 'center' }}>
+          <Box
+            sx={{
+              width: 64,
+              height: 64,
+              borderRadius: '50%',
+              bgcolor: 'rgba(31,138,87,0.12)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mx: 'auto',
+              mb: 1.5
+            }}
+          >
+            <CheckCircle sx={{ fontSize: 38, color: success }} />
+          </Box>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: ink }}>
+            Payment successful
+          </Typography>
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body1" sx={{ textAlign: 'center', mb: 2 }}>
-            Confirmation email sent to {customerEmail}
+          <Typography variant="body2" sx={{ textAlign: 'center', mb: 1.5, color: inkSoft }}>
+            Confirmation email sent to <strong>{customerEmail}</strong>
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-            Redirecting to confirmation...
+          <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', color: inkSoft }}>
+            Redirecting to your confirmation…
           </Typography>
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-            <CircularProgress size={24} />
+            <CircularProgress size={22} sx={{ color: amber }} />
           </Box>
         </DialogContent>
       </Dialog>
 
-      <Grid container spacing={3}>
-        {/* Left Column - Customer Details */}
-        <Grid item xs={12} lg={6}>
-          <Paper sx={{ p: 3, borderRadius: 2 }}>
-            <Typography variant="h6" sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Person /> Customer details
+      <Box sx={{ bgcolor: paper, borderRadius: 3, p: { xs: 2, md: 3 } }}>
+        {/* Step header */}
+        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
+          <Box
+            sx={{
+              width: 44,
+              height: 44,
+              borderRadius: 2.5,
+              bgcolor: ink,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}
+          >
+            <LocalShipping sx={{ color: amber, fontSize: 24 }} />
+          </Box>
+          <Box>
+            <Typography
+              variant="overline"
+              sx={{ color: amberDark, fontWeight: 700, letterSpacing: '0.1em', lineHeight: 1 }}
+            >
+              Step 4 of 4
             </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: ink, letterSpacing: '-0.01em' }}>
+              Confirm your pickup
+            </Typography>
+          </Box>
+        </Stack>
 
-            <Stack spacing={2.5}>
-              <TextField
-                label="Full Name *"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                error={!!errors.name}
-                helperText={errors.name}
-                fullWidth
-                required
-                InputProps={{
-                  startAdornment: <Person sx={{ mr: 1, color: 'action.active' }} />
-                }}
-              />
-
-              <TextField
-                label="Email Address *"
-                type="email"
-                value={customerEmail}
-                onChange={(e) => setCustomerEmail(e.target.value)}
-                error={!!errors.email}
-                helperText={errors.email || "Confirmation will be sent here"}
-                fullWidth
-                required
-                InputProps={{
-                  startAdornment: <Email sx={{ mr: 1, color: 'action.active' }} />
-                }}
-              />
-
-            </Stack>
-
-            {/* Payment Method */}
-            <Box sx={{ mt: 4,display: 'none' }}>
-              <Typography variant="h6" sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Payment /> Payment Method
+        <Grid container spacing={3}>
+          {/* Left Column - Customer Details */}
+          <Grid item xs={12} lg={6}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: { xs: 2.5, md: 3 },
+                borderRadius: 3,
+                border: `1px solid ${line}`,
+                mb: 3
+              }}
+            >
+              <Typography
+                variant="overline"
+                sx={{ color: inkSoft, fontWeight: 700, letterSpacing: '0.08em' }}
+              >
+                Customer details
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: ink, mb: 2.5 }}>
+                Who should we contact?
               </Typography>
 
-              <FormControl component="fieldset" sx={{ width: '100%' }}>
-                <RadioGroup
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                >
-                  {paymentMethods.map(method => (
-                    <Fade in={true} key={method.value}>
-                      <FormControlLabel
-                        value={method.value}
-                        control={<Radio />}
-                        label={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            {method.icon}
-                            {method.label}
-                          </Box>
-                        }
-                        sx={{
-                          mb: 2,
-                          p: 1.5,
-                          borderRadius: 2,
-                          border: '1px solid',
-                          borderColor: paymentMethod === method.value ? 'primary.main' : 'grey.300',
-                          bgcolor: paymentMethod === method.value ? 'primary.50' : 'transparent'
-                        }}
-                      />
-                    </Fade>
-                  ))}
-                </RadioGroup>
-              </FormControl>
-            </Box>
-          </Paper>
-          <Paper sx={{ p: 3, borderRadius: 2, position: 'sticky', top: 20 }}>
-            <Typography variant="h6" sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CheckCircle /> Payment summary
-            </Typography>
+              <Stack spacing={2.5}>
+                <TextField
+                  label="Full name"
+                  placeholder="e.g. Ananya Roy"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  error={!!errors.name}
+                  helperText={errors.name}
+                  fullWidth
+                  required
+                  InputProps={{
+                    startAdornment: <Person sx={{ mr: 1, color: amberDark }} />
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: amber, borderWidth: 2 }
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': { color: amberDark }
+                  }}
+                />
 
-            <Card variant="outlined" sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
-                  Booking details
+                <TextField
+                  label="Email address"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  error={!!errors.email}
+                  helperText={errors.email || "Your booking confirmation goes here"}
+                  fullWidth
+                  required
+                  InputProps={{
+                    startAdornment: <Email sx={{ mr: 1, color: amberDark }} />
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: amber, borderWidth: 2 }
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': { color: amberDark }
+                  }}
+                />
+              </Stack>
+
+              {/* Payment Method (kept hidden — logic/markup preserved for future use) */}
+              <Box sx={{ mt: 4, display: 'none' }}>
+                <Typography variant="h6" sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1, color: ink }}>
+                  <Payment /> Payment method
                 </Typography>
-                
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2">Booking Id</Typography>
-                  <Typography variant="body1" fontWeight={600}>
-                    QM-{bookingData.bookingId}
+
+                <FormControl component="fieldset" sx={{ width: '100%' }}>
+                  <RadioGroup
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                  >
+                    {paymentMethods.map(method => (
+                      <Fade in={true} key={method.value}>
+                        <FormControlLabel
+                          value={method.value}
+                          control={<Radio sx={{ color: line, '&.Mui-checked': { color: amber } }} />}
+                          label={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              {method.icon}
+                              {method.label}
+                            </Box>
+                          }
+                          sx={{
+                            mb: 2,
+                            p: 1.5,
+                            borderRadius: 2,
+                            border: '1px solid',
+                            borderColor: paymentMethod === method.value ? amber : line,
+                            bgcolor: paymentMethod === method.value ? 'rgba(224,135,42,0.08)' : 'transparent'
+                          }}
+                        />
+                      </Fade>
+                    ))}
+                  </RadioGroup>
+                </FormControl>
+              </Box>
+            </Paper>
+
+            {/* Ticket-stub style booking summary */}
+            <Box
+              sx={{
+                position: 'sticky',
+                top: 20,
+                borderRadius: 3,
+                border: `1px solid ${line}`,
+                bgcolor: '#fff',
+                boxShadow: '0 12px 30px rgba(22,35,59,0.08)',
+                overflow: 'hidden'
+              }}
+            >
+              {/* stub header */}
+              <Box
+                sx={{
+                  bgcolor: ink,
+                  px: { xs: 2.5, md: 3 },
+                  py: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
+              >
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <ConfirmationNumber sx={{ color: amber, fontSize: 20 }} />
+                  <Typography sx={{ color: '#fff', fontWeight: 700, letterSpacing: '0.02em' }}>
+                    Booking summary
                   </Typography>
-                </Box>
+                </Stack>
+                <Chip
+                  label="Pending payment"
+                  size="small"
+                  sx={{
+                    bgcolor: 'rgba(224,135,42,0.18)',
+                    color: amber,
+                    fontWeight: 700,
+                    border: `1px solid ${amber}`
+                  }}
+                />
+              </Box>
 
-                <Divider sx={{ my: 2 }} />
+              <Box sx={{ px: { xs: 2.5, md: 3 }, py: 2.5 }}>
+                <Typography variant="caption" sx={{ color: inkSoft, letterSpacing: '0.06em' }}>
+                  BOOKING ID
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 800,
+                    color: ink,
+                    fontFamily: '"Roboto Mono", monospace',
+                    letterSpacing: '0.03em',
+                    mb: 2
+                  }}
+                >
+                  QM-{bookingData.bookingId}
+                </Typography>
 
-                <Stack spacing={1.5} sx={{ mb: 3 }}>
+                <Stack spacing={1.25}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2">Total amount</Typography>
-                    <Typography variant="body2">₹{bookingData.price?.toLocaleString('en-IN') || 0}</Typography>
+                    <Typography variant="body2" sx={{ color: inkSoft }}>Total amount</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: ink }}>
+                      ₹{bookingData.price?.toLocaleString('en-IN') || 0}
+                    </Typography>
                   </Box>
-                  
+
                   {/* <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2">Token Amount (10%)</Typography>
                     <Typography variant="body2" color="success.main" fontWeight={600}>
                       ₹{tokenAmount.toLocaleString('en-IN')}
                     </Typography>
                   </Box> */}
-                  
+
                   {/* <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2">Balance Payable (90%)</Typography>
                     <Typography variant="body2">
@@ -491,51 +631,113 @@ const handlePayment = async () => {
                     10% token to confirm booking
                   </Typography>
                 </Box> */}
-              </CardContent>
-            </Card>
+              </Box>
 
-            {/* <Alert severity="info" sx={{ mb: 3 }}>
-              <Typography variant="body2">
-                • Pay 10% token amount to confirm booking<br/>
-                • Balance 90% payable at pickup<br/>
-                • Confirmation email with PDF will be sent instantly
-              </Typography>
-            </Alert> */}
+              {/* perforated tear line */}
+              <Box sx={{ position: 'relative', height: 0 }}>
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: -10,
+                    top: -10,
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    bgcolor: paper,
+                    border: `1px solid ${line}`
+                  }}
+                />
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    right: -10,
+                    top: -10,
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    bgcolor: paper,
+                    border: `1px solid ${line}`
+                  }}
+                />
+              </Box>
+              <Box
+                sx={{
+                  mx: 2.5,
+                  borderTop: `2px dashed ${line}`
+                }}
+              />
 
-            {/* Action Buttons */}
-            <Stack spacing={2}>
-              <Button
-                variant="outlined"
-                fullWidth
-                onClick={onBack}
-                disabled={loading}
-              >
-                Back to Review Booking Page
-              </Button>
-              
-              <Button
-                variant="contained"
-                fullWidth
-                size="large"
-                onClick={handlePayment}
-                disabled={loading}
-                startIcon={loading ? <CircularProgress size={40} /> : <Payment />}
-              >
-                {loading ? "Processing..." : `Confirm Pickup Schedule Pay₹${tokenAmount.toLocaleString('en-IN')}`}
-              </Button>
-              
-              <Button
-                variant="outlined"
-                fullWidth
-                onClick={handleDownloadPDF}
-                startIcon={<Email />}
-              >
-              Download Estimated Quotation
-              </Button>
-            </Stack>
-          </Paper>
+              {/* <Alert severity="info" sx={{ mb: 3 }}>
+                <Typography variant="body2">
+                  • Pay 10% token amount to confirm booking<br/>
+                  • Balance 90% payable at pickup<br/>
+                  • Confirmation email with PDF will be sent instantly
+                </Typography>
+              </Alert> */}
+
+              {/* Action Buttons */}
+              <Stack spacing={1.5} sx={{ px: { xs: 2.5, md: 3 }, py: 3 }}>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  size="large"
+                  onClick={handlePayment}
+                  disabled={loading}
+                  startIcon={loading ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : <Payment />}
+                  sx={{
+                    bgcolor: amber,
+                    color: '#fff',
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    py: 1.4,
+                    textTransform: 'none',
+                    fontSize: '1rem',
+                    boxShadow: '0 8px 20px rgba(224,135,42,0.35)',
+                    '&:hover': { bgcolor: amberDark, boxShadow: '0 10px 24px rgba(192,110,23,0.4)' },
+                    '&.Mui-disabled': { bgcolor: 'rgba(224,135,42,0.5)', color: '#fff' }
+                  }}
+                >
+                  {loading ? "Processing…" : `Confirm pickup — Pay ₹${tokenAmount.toLocaleString('en-IN')}`}
+                </Button>
+
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  onClick={handleDownloadPDF}
+                  startIcon={<FileDownloadOutlined />}
+                  sx={{
+                    borderRadius: 2,
+                    borderColor: line,
+                    color: ink,
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    py: 1.1,
+                    '&:hover': { borderColor: ink, bgcolor: 'rgba(22,35,59,0.04)' }
+                  }}
+                >
+                  Download estimated quotation
+                </Button>
+
+                <Button
+                  variant="text"
+                  fullWidth
+                  onClick={onBack}
+                  disabled={loading}
+                  startIcon={<ArrowBack fontSize="small" />}
+                  sx={{
+                    color: inkSoft,
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    '&:hover': { bgcolor: 'rgba(22,35,59,0.04)' }
+                  }}
+                >
+                  Back to review booking
+                </Button>
+              </Stack>
+            </Box>
+          </Grid>
         </Grid>
-      </Grid>
+      </Box>
     </>
   );
 };

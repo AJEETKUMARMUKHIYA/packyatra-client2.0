@@ -21,7 +21,8 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Avatar
 } from "@mui/material";
 import {
   CheckCircle,
@@ -34,7 +35,11 @@ import {
   Receipt,
   CurrencyRupee,
   Email,
-  Download
+  Download,
+  Inventory2,
+  Route as RouteIcon,
+  ArrowForward,
+  VerifiedUser
 } from "@mui/icons-material";
 import AxiosClient from "../AxiosClient";
 import {generateBookingConfirmationPDF as GenerateQuotationPDF } from "./generateQuotationPDF";
@@ -348,6 +353,10 @@ const Step3_ReviewBooking = ({
     return parts.slice(0, 2).join(',') + (parts.length > 2 ? '...' : '');
   };
 
+  const formattedShiftingDate = shiftingDate
+    ? new Date(shiftingDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+    : "Not selected";
+
   return (
     <>
       <Snackbar
@@ -356,14 +365,20 @@ const Step3_ReviewBooking = ({
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={error?.startsWith('✅') ? "success" : "error"} sx={{ width: '100%' }}>
+        <Alert onClose={handleCloseSnackbar} severity={error?.startsWith('✅') ? "success" : "error"} sx={{ width: '100%', borderRadius: 2 }}>
           {error}
         </Alert>
       </Snackbar>
 
       {/* Quotation Dialog */}
-      <Dialog open={quotationDialogOpen} onClose={() => setQuotationDialogOpen(false)}>
-        <DialogTitle>Get Quotation by Email</DialogTitle>
+      <Dialog
+        open={quotationDialogOpen}
+        onClose={() => setQuotationDialogOpen(false)}
+        PaperProps={{ sx: { borderRadius: 3, minWidth: { xs: 'auto', sm: 420 } } }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}>
+          <Email color="primary" /> Get quotation by email
+        </DialogTitle>
         <DialogContent>
           <TextField
             label="Your Name"
@@ -372,6 +387,7 @@ const Step3_ReviewBooking = ({
             fullWidth
             margin="normal"
             required
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
           />
           <TextField
             label="Email Address"
@@ -381,35 +397,211 @@ const Step3_ReviewBooking = ({
             fullWidth
             margin="normal"
             required
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
           />
-          <Alert severity="info" sx={{ mt: 2 }}>
+          <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
             Quotation PDF will be sent to your email. No payment required.
           </Alert>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setQuotationDialogOpen(false)}>Cancel</Button>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={() => setQuotationDialogOpen(false)} sx={{ borderRadius: 2 }}>Cancel</Button>
           <Button 
             onClick={handleSendQuotation} 
             variant="contained"
             disabled={sendingQuotation}
             startIcon={sendingQuotation ? <CircularProgress size={20} /> : <Email />}
+            sx={{ borderRadius: 2, px: 3 }}
           >
             {sendingQuotation ? "Sending..." : "Send Quotation"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Grid item xs={12} lg={8}>
+      <Grid container spacing={3}>
         <Grid item xs={12} lg={8}>
           <Stack spacing={3}>
-            {/* ... existing review booking UI remains the same ... */}
-            {/* (Keep all the existing Paper, Card, Typography components from your Step3_ReviewBooking.js) */}
+
+            {/* Route card */}
+            <Paper
+              elevation={0}
+              sx={{
+                p: { xs: 2.5, sm: 3 },
+                borderRadius: 3,
+                border: '1px solid',
+                borderColor: 'divider',
+                background: 'linear-gradient(135deg, rgba(25,118,210,0.06) 0%, rgba(25,118,210,0.01) 100%)'
+              }}
+            >
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2.5 }}>
+                <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
+                  <RouteIcon sx={{ fontSize: 18 }} />
+                </Avatar>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  Your route
+                </Typography>
+              </Stack>
+
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }}>
+                <Box sx={{ flex: 1, p: 2, borderRadius: 2, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
+                  <Stack direction="row" spacing={1} alignItems="flex-start">
+                    <LocationOn color="success" fontSize="small" sx={{ mt: 0.3 }} />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, letterSpacing: 0.5 }}>
+                        PICKUP
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {formatAddress(fromAddress)}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'center', color: 'text.disabled' }}>
+                  <ArrowForward sx={{ transform: { xs: 'rotate(90deg)', sm: 'none' } }} />
+                </Box>
+
+                <Box sx={{ flex: 1, p: 2, borderRadius: 2, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
+                  <Stack direction="row" spacing={1} alignItems="flex-start">
+                    <LocationOn color="error" fontSize="small" sx={{ mt: 0.3 }} />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, letterSpacing: 0.5 }}>
+                        DROP-OFF
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {formatAddress(toAddress)}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Box>
+              </Stack>
+
+              {distance ? (
+                <Chip
+                  size="small"
+                  icon={<DirectionsCar sx={{ fontSize: 16 }} />}
+                  label={`${distance} km distance`}
+                  sx={{ mt: 2, fontWeight: 600, bgcolor: 'primary.50', color: 'primary.main' }}
+                />
+              ) : null}
+            </Paper>
+
+            {/* Schedule + items row */}
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <Paper
+                  elevation={0}
+                  sx={{ p: 2.5, borderRadius: 3, border: '1px solid', borderColor: 'divider', height: '100%' }}
+                >
+                  <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+                    <Avatar sx={{ bgcolor: 'secondary.main', width: 32, height: 32 }}>
+                      <CalendarToday sx={{ fontSize: 16 }} />
+                    </Avatar>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                      Schedule
+                    </Typography>
+                  </Stack>
+                  <Stack spacing={1.5}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Pickup date</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 600 }}>{formattedShiftingDate}</Typography>
+                    </Box>
+                    <Divider />
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <AccessTime fontSize="small" color="action" />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" display="block">Time slot</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{getTimeSlotName()}</Typography>
+                      </Box>
+                    </Stack>
+                  </Stack>
+                </Paper>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Paper
+                  elevation={0}
+                  sx={{ p: 2.5, borderRadius: 3, border: '1px solid', borderColor: 'divider', height: '100%' }}
+                >
+                  <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+                    <Avatar sx={{ bgcolor: 'warning.main', width: 32, height: 32 }}>
+                      <Inventory2 sx={{ fontSize: 16 }} />
+                    </Avatar>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                      Items & volume
+                    </Typography>
+                  </Stack>
+                  <Stack spacing={1.5}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Selected items</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                        {bookingData.selectedItems.length} item{bookingData.selectedItems.length === 1 ? '' : 's'}
+                      </Typography>
+                    </Box>
+                    <Divider />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Total volume</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>{totalCFT} CFT</Typography>
+                    </Box>
+                  </Stack>
+                </Paper>
+              </Grid>
+            </Grid>
+
+            {/* Additional services */}
+            <Paper elevation={0} sx={{ p: { xs: 2.5, sm: 3 }, borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+                <Avatar sx={{ bgcolor: 'info.main', width: 32, height: 32 }}>
+                  <LocalShipping sx={{ fontSize: 16 }} />
+                </Avatar>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                  Additional services
+                </Typography>
+              </Stack>
+              <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+                <Chip
+                  icon={<Elevator sx={{ fontSize: 16 }} />}
+                  label={`Pickup lift: ${bookingData.serviceLift === 'yes' ? 'Available' : 'Not available'}`}
+                  variant="outlined"
+                  sx={{ fontWeight: 500 }}
+                />
+                <Chip
+                  icon={<Elevator sx={{ fontSize: 16 }} />}
+                  label={`Drop lift: ${bookingData.serviceLiftdrop === 'yes' ? 'Available' : 'Not available'}`}
+                  variant="outlined"
+                  sx={{ fontWeight: 500 }}
+                />
+                {bookingData.selectedFloor !== undefined && bookingData.selectedFloor !== null ? (
+                  <Chip
+                    label={`Floor: ${bookingData.selectedFloor}`}
+                    variant="outlined"
+                    sx={{ fontWeight: 500 }}
+                  />
+                ) : null}
+                <Chip
+                  icon={<DirectionsCar sx={{ fontSize: 16 }} />}
+                  label={`Van access: ${bookingData.vanAccessible === 'yes' ? 'Yes' : 'No'}`}
+                  variant="outlined"
+                  sx={{ fontWeight: 500 }}
+                />
+              </Stack>
+            </Paper>
           </Stack>
         </Grid>
 
         <Grid item xs={12} lg={4}>
-          <Paper sx={{ p: 3, position: 'sticky', top: 20 }}>
-            <Typography variant="h6" sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              position: 'sticky',
+              top: 20,
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: 'divider',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.06)'
+            }}
+          >
+            <Typography variant="h6" sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}>
               <CurrencyRupee /> Price summary
             </Typography>
 
@@ -423,8 +615,8 @@ const Step3_ReviewBooking = ({
             ) : (
               <>
                 <Stack spacing={1.5} sx={{ mb: 3 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2">Base shipping</Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="body2" color="text.secondary">Base shipping</Typography>
                     {/* <Typography variant="body2">₹{priceBreakdown.basePrice.toLocaleString('en-IN')}</Typography> */}
                      <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main' }}>
                       ₹{calculatedPrice.toLocaleString('en-IN')}
@@ -436,9 +628,10 @@ const Step3_ReviewBooking = ({
                   <Box sx={{ 
                     display: 'flex', 
                     justifyContent: 'space-between',
+                    alignItems: 'center',
                     p: 2,
-                    borderRadius: 1,
-                    bgcolor: 'primary.50',
+                    borderRadius: 2,
+                    background: 'linear-gradient(135deg, rgba(25,118,210,0.12) 0%, rgba(25,118,210,0.04) 100%)',
                     border: '1px solid',
                     borderColor: 'primary.100'
                   }}>
@@ -449,9 +642,13 @@ const Step3_ReviewBooking = ({
                   </Box>
                 </Stack>
 
-                <Alert severity="info" sx={{ mb: 3 }}>
+                <Alert
+                  severity="info"
+                  icon={<VerifiedUser fontSize="small" />}
+                  sx={{ mb: 3, borderRadius: 2 }}
+                >
                   <Typography variant="body2">
-                    Please pay 10% of the total amount (₹{(calculatedPrice * 0.1).toLocaleString('en-IN')}) now to confirm your booking slot.. 
+                    Please pay 10% of the total amount (₹{(calculatedPrice * 0.1).toLocaleString('en-IN')}) now to confirm your booking slot..
                     {/* Balance ₹{(calculatedPrice * 0.9).toLocaleString('en-IN')} payable at pickup. */}
                   </Typography>
                 </Alert>
@@ -474,7 +671,15 @@ const Step3_ReviewBooking = ({
                     size="large"
                     onClick={handleCreateBooking}
                     disabled={loading || calculatedPrice === 0 || bookingData.selectedItems.length === 0 || !bookingData.selectedTimeSlot}
-                    startIcon={loading ? <CircularProgress size={20} /> : <CheckCircle />}
+                    startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <CheckCircle />}
+                    sx={{
+                      borderRadius: 2,
+                      py: 1.4,
+                      fontWeight: 700,
+                      textTransform: 'none',
+                      fontSize: '1rem',
+                      boxShadow: '0 4px 14px rgba(25,118,210,0.35)'
+                    }}
                   >
                     {loading ? "Creating Booking..." : "Confirm & Proceed to Payment"}
                   </Button>
@@ -484,6 +689,7 @@ const Step3_ReviewBooking = ({
                     fullWidth
                     onClick={onBack}
                     disabled={loading}
+                    sx={{ borderRadius: 2, py: 1.2, textTransform: 'none', fontWeight: 600 }}
                   >
                     Back to Services
                   </Button>
@@ -494,10 +700,10 @@ const Step3_ReviewBooking = ({
         </Grid>
       </Grid>
       <ValidationDialog
-  open={validationOpen}
-  message={validationMessage}
-  onClose={() => setValidationOpen(false)}
-/>
+        open={validationOpen}
+        message={validationMessage}
+        onClose={() => setValidationOpen(false)}
+      />
     </>
   );
 };
