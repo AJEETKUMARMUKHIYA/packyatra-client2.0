@@ -142,11 +142,6 @@ const handleLogoutFromDropdown = () => {
               <Mail size={13} className="contact-icon" />
               <a href="mailto:info@packyatra.com">info@packyatra.com</a>
             </span>
-            <span className="contact-divider-desktop">•</span>
-            <span className="top-bar-tagline">
-              <i className="fas fa-shield-alt" style={{ color: "#22c55e", marginRight: "4px" }}></i>
-              ISO 9001:2015 Certified Relocation
-            </span>
           </div>
           <div className="top-bar-right">
             <UserDropdown onLogout={handleLogoutFromDropdown} />

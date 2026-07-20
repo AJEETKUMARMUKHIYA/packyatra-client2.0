@@ -21,11 +21,6 @@ import TermsAndConditions from "./pages/TermsAndConditions.jsx";
 import RefundPolicy from "./pages/Refaundpolicy.jsx";
 import PravacyPolicies from "./pages/Privacypolicy.jsx";
 
-// Admin pages
-
-// import ManageUserPage from "./admin/Users/ManageUserPage.jsx";
-// import SupervisorPage from "./admin/Users/SupervisorPage1.jsx";
-// import UpdateTicket from "./admin/Users/UpdateTicket.jsx";
 
 import UserProfile from './components/UserProfile';
 import "./App.css";
@@ -86,11 +81,6 @@ const App = () => {
             <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />
             <Route path="/privacy-policy" element={<PravacyPolicies />} />
-
-            {/* Admin Pages */}
-            {/* <Route path="/manageUserPage" element={<ManageUserPage />} />
-            <Route path="/supervisorPage/:userId" element={<SupervisorPage />}/>
-            <Route path="/admin/users/updateticket/:ticketId" element={<UpdateTicket />}/> */}
 
           </Routes>
         </main>

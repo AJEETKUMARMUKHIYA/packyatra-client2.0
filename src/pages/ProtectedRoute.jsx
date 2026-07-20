@@ -10,7 +10,7 @@ const ProtectedRoute = ({ children }) => {
     const password = window.prompt("Enter Password:");
 
     // Hardcoded credentials
-    if ((username === "payal" ||username === "sonu" ||username === "nitu" ||username === "pradeep" ||username === "pawan" ||username === "swathi" ||username === "durga" )&& password === "pass@091") {
+    if ((username === "payal" ||username === "nitu" ||username === "pradeep" ||username === "pawan" ||username === "swathi" ||username === "durga" )&& password === "pass@091") {
       sessionStorage.setItem("ticketAuth", "true");
       return children;
     } else {

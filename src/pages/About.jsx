@@ -68,7 +68,7 @@ const About = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="about-subtitle"
           >
-            Since 2008, we've been crafting stress-free, secure, and professional moving experiences built on absolute trust.
+            Since 2025, we've been crafting stress-free, secure, and professional moving experiences built on absolute trust.
           </motion.p>
         </div>
       </section>
@@ -88,12 +88,12 @@ const About = () => {
             </div>
             <div className="stat-divider-line" />
             <div className="stat-box">
-              <div className="stat-number">50+</div>
+              <div className="stat-number">10+</div>
               <div className="stat-label">Cities Nationwide</div>
             </div>
             <div className="stat-divider-line" />
             <div className="stat-box">
-              <div className="stat-number">10K+</div>
+              <div className="stat-number">220+</div>
               <div className="stat-label">Families Shifted</div>
             </div>
             <div className="stat-divider-line" />
@@ -205,13 +205,13 @@ const About = () => {
               <div className="cert-icon-bg bg-orange">
                 <Award size={24} />
               </div>
-              <div className="cert-content">
+              {/* <div className="cert-content">
                 <h3>ISO 9001:2015 Certified</h3>
                 <p>
                   Officially verified for Quality Management Standards, ensuring 
                   fully refined, premium packing materials, tracking, and customer service.
                 </p>
-              </div>
+              </div> */}
             </motion.div>
 
             <motion.div 

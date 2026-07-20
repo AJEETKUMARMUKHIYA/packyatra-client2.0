@@ -420,7 +420,7 @@ const HomeSelection = ({ onLoginStatusChange }) => {
                   >
                     Professional relocation services with years of proven experience. 
                     Offering ultra-secure door-to-door moving, full multi-layered packing, 
-                    and premium transit insurance coverage across 50+ cities.
+                    and premium transit insurance coverage across 10+ cities.
                   </motion.p>
 
                   {/* Key Stats Icons Section */}

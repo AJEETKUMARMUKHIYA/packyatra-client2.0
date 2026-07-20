@@ -231,7 +231,7 @@ const OtpLoginAdmin = ({ onSuccess, onClose, userData = {} }) => {
                   <div className="feature-icon">
                     <MapPin size={15} />
                   </div>
-                  <span>Serving 50+ Cities Nationwide</span>
+                  <span>Serving 10+ Cities Nationwide</span>
                 </div>
               </div>
             </div>

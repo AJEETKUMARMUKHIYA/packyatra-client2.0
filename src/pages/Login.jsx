@@ -155,7 +155,7 @@ const UserLogin = ({ onClose }) => {
                 🛡️ Damage Protection • Verified Professionals
               </div>
               <div  className="rating-row">
-                📍 Serving 50+ Cities Across India
+                📍 Serving 10+ Cities Across India
               </div>
             </>
           )}
