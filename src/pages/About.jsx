@@ -83,7 +83,7 @@ const About = () => {
             className="stats-grid-wrapper"
           >
             <div className="stat-box">
-              <div className="stat-number">15+</div>
+              <div className="stat-number">1+</div>
               <div className="stat-label">Years of Trust</div>
             </div>
             <div className="stat-divider-line" />
@@ -195,24 +195,7 @@ const About = () => {
           </div>
 
           <div className="services-grid">
-            <motion.div 
-              className="cert-card-premium"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-            >
-              <div className="cert-icon-bg bg-orange">
-                <Award size={24} />
-              </div>
-              {/* <div className="cert-content">
-                <h3>ISO 9001:2015 Certified</h3>
-                <p>
-                  Officially verified for Quality Management Standards, ensuring 
-                  fully refined, premium packing materials, tracking, and customer service.
-                </p>
-              </div> */}
-            </motion.div>
+            
 
             <motion.div 
               className="cert-card-premium"

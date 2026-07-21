@@ -570,7 +570,7 @@ const HomeSelection = ({ onLoginStatusChange }) => {
                   >
                     Professional relocation services with years of proven experience. 
                     Offering ultra-secure door-to-door moving, full multi-layered packing, 
-                    and premium transit insurance coverage across 50+ cities.
+                    and premium transit insurance coverage across 10+ cities.
                   </motion.p>
 
                   {/* Key Stats Icons Section */}
@@ -622,7 +622,7 @@ const HomeSelection = ({ onLoginStatusChange }) => {
                         <FontAwesomeIcon icon={faTruckMoving} />
                       </div>
                       <div>
-                        <div style={{ fontSize: "16px", fontWeight: "700", color: "#ffffff" }}>50+ Cities</div>
+                        <div style={{ fontSize: "16px", fontWeight: "700", color: "#ffffff" }}>10+ Cities</div>
                         <div style={{ fontSize: "12px", color: "#94a3b8" }}>Pan-India Coverage</div>
                       </div>
                     </div>
@@ -665,7 +665,7 @@ const HomeSelection = ({ onLoginStatusChange }) => {
                       </div>
                       <div>
                         <div style={{ fontSize: "16px", fontWeight: "700", color: "#ffffff", display: "flex", alignItems: "center", gap: "6px" }}>
-                          15K+ Happy <span style={{ fontSize: "9px", background: "#4285F4", color: "#ffffff", padding: "1px 6px", borderRadius: "8px", fontWeight: "900", letterSpacing: "0.3px", fontFamily: "system-ui" }}>Google</span>
+                          1K+ Happy <span style={{ fontSize: "9px", background: "#4285F4", color: "#ffffff", padding: "1px 6px", borderRadius: "8px", fontWeight: "900", letterSpacing: "0.3px", fontFamily: "system-ui" }}>Google</span>
                         </div>
                         <div style={{ fontSize: "12px", color: "#94a3b8", display: "flex", alignItems: "center", gap: "4px" }}>
                           <span>Rated 4.9/5 Stars</span>

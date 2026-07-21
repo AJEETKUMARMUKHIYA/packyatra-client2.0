@@ -660,7 +660,7 @@ body {
 /* =====================
    PAGE OFFSET FIX
 ===================== */
-.main-content {
+main.main-content {
   padding-top: 110px !important; /* matches top-bar (40px) + header (70px) */
 }
 

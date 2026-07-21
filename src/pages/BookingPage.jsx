@@ -6,13 +6,14 @@ import {
   Typography,
   Box,
   Alert,
-  Snackbar
+  Snackbar,
+  Tabs,
+  Tab
 } from "@mui/material";
 import { useSearchParams } from "react-router-dom";
 import Step1_SelectItems from "./Step1_SelectItems";
 import Step2_ServiceOptions from "./Step2_ServiceOptions";
-import Step3_ReviewBooking from "./Step3_ReviewBooking";
-import Step4_Payment from "./Step4_Payment";
+import Step2_ReviewAndPayment from "./Step2_ReviewAndPayment";
 import Step5_Confirmation from "./Step5_Confirmation";
 import BookingProgress from "./BookingProgress";
 import AxiosClient from "../AxiosClient";
@@ -48,6 +49,7 @@ const BookingPage = () => {
   const addressId = localStorage.getItem("addressID");
   const mobile = localStorage.getItem("mobile");
   const [currentStep, setCurrentStep] = useState(1);
+  const [step1SubStep, setStep1SubStep] = useState("items"); // "items" | "services"
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -182,58 +184,40 @@ const BookingPage = () => {
 
   /* ---------------- STEP HANDLERS ---------------- */
   const handleNextStep = () => {
-    if (validateCurrentStep()) {
-      setCurrentStep(prev => prev + 1);
-      setError(null);
-    }
-  };
-
-  const handlePreviousStep = () => {
-    setCurrentStep(prev => prev - 1);
-    setError(null);
-  };
-
-  const handleUpdateBookingData = (updates) => {
-    setBookingData(prev => ({ ...prev, ...updates }));
-  };
-
-  /* ---------------- VALIDATION ---------------- */
-  const validateCurrentStep = () => {
-    switch (currentStep) {
-      case 1:
+    if (currentStep === 1) {
+      if (step1SubStep === "items") {
         if (!bookingData.selectedItems.length) {
           showError("Please select at least one item");
-          return false;
+          return;
         }
-        return true;
-
-      case 2:
+        setStep1SubStep("services");
+      } else {
         if (
           !bookingData.serviceLift ||
           !bookingData.vanAccessible ||
           !bookingData.selectedTimeSlot ||
-          (bookingData.serviceLift === "no" && !bookingData.selectedFloor) ||
+          (bookingData.serviceLift === "no" && bookingData.selectedFloor === null) ||
           (bookingData.vanAccessible === "no" && !bookingData.roadDistance)
         ) {
           showError("Please complete all service options");
-          return false;
+          return;
         }
-        return true;
-
-      case 4:
-        if (
-          !bookingData.customerName ||
-          !/^\S+@\S+\.\S+$/.test(bookingData.customerEmail) ||
-          !/^\d{10}$/.test(bookingData.customerPhone)
-        ) {
-          //showError("Please enter valid customer details");
-          return true;
-        }
-        return true;
-
-      default:
-        return true;
+        setCurrentStep(2);
+      }
     }
+  };
+
+  const handlePreviousStep = () => {
+    if (currentStep === 2) {
+      setCurrentStep(1);
+      setStep1SubStep("services");
+    } else if (currentStep === 1 && step1SubStep === "services") {
+      setStep1SubStep("items");
+    }
+  };
+
+  const handleUpdateBookingData = (updates) => {
+    setBookingData(prev => ({ ...prev, ...updates }));
   };
 
   const showError = (msg) => {
@@ -251,8 +235,8 @@ const BookingPage = () => {
       loading
     };
 
-    switch (currentStep) {
-      case 1:
+    if (currentStep === 1) {
+      if (step1SubStep === "items") {
         return (
           <Step1_SelectItems
             {...commonProps}
@@ -260,8 +244,7 @@ const BookingPage = () => {
             organizedInventory={organizedInventory}
           />
         );
-
-      case 2:
+      } else {
         return (
           <Step2_ServiceOptions
             {...commonProps}
@@ -269,40 +252,26 @@ const BookingPage = () => {
             timeSlots={timeSlots}
           />
         );
-
-      case 3:
-        return (
-          <Step3_ReviewBooking
-            {...commonProps}
-            distance={bookingData.distance}
-            shiftingDate={shiftingDate}
-            fromAddress={fromAddress}
-            toAddress={toAddress}
-            userId={userId}
-            addressId={addressId}
-            timeSlots={timeSlots}
-          
-              priceCalculateCitywise={priceCalculateCitywise}
-          />
-        );
-
-      case 4:
-        return <Step4_Payment 
-        {...commonProps} 
-         timeSlots={timeSlots}/>;
-
-      case 5:
-        return (
-          <Step5_Confirmation
-            {...commonProps}
-            onBack={() => navigate("/")}
-            timeSlots={timeSlots}
-          />
-        );
-
-      default:
-        return null;
+      }
     }
+
+    if (currentStep === 2) {
+      return (
+        <Step2_ReviewAndPayment
+          {...commonProps}
+          distance={bookingData.distance}
+          shiftingDate={shiftingDate}
+          fromAddress={fromAddress}
+          toAddress={toAddress}
+          userId={userId}
+          addressId={addressId}
+          timeSlots={timeSlots}
+          priceCalculateCitywise={priceCalculateCitywise}
+        />
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -314,6 +283,29 @@ const BookingPage = () => {
       <BookingProgress currentStep={currentStep} />
 
       <Paper sx={{ mt: 3, p: 3, borderRadius: 3 }}>
+        {currentStep === 1 && (
+          <Tabs
+            value={step1SubStep === "items" ? 0 : 1}
+            onChange={(e, newValue) => {
+              if (newValue === 0) {
+                setStep1SubStep("items");
+              } else {
+                if (!bookingData.selectedItems.length) {
+                  showError("Please select at least one item first");
+                  return;
+                }
+                setStep1SubStep("services");
+              }
+            }}
+            indicatorColor="primary"
+            textColor="primary"
+            variant="fullWidth"
+            sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}
+          >
+            <Tab label="1. Select Items" sx={{ fontWeight: 600, fontSize: "14px", textTransform: "none" }} />
+            <Tab label="2. Service Options" sx={{ fontWeight: 600, fontSize: "14px", textTransform: "none" }} />
+          </Tabs>
+        )}
         {renderCurrentStep()}
       </Paper>
     </Container>

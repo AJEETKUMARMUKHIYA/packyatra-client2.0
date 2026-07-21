@@ -2,11 +2,8 @@ import React from "react";
 import { Stepper, Step, StepLabel, Box } from "@mui/material";
 
 const steps = [
-  "Select Items",
-  "Service Options",
-  "Review Booking",
-  "Payment",
-  "Confirmation"
+  "Select Items & Services",
+  "Review & Payment"
 ];
 
 const BookingProgress = ({ currentStep }) => {

@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Modal.css";
 import OtpLoginAdmin from "../components/OtpLoginAdmin.jsx";
@@ -15,11 +16,16 @@ const ModalAdmin = ({ isOpen, closeModal, distance, activeTab, shiftingDate, fro
     });
   };
 
+  useEffect(() => {
+    if (isOpen && isOtpValid()) {
+      continueBooking();
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   // Already logged in (within 30 minutes)
   if (isOtpValid()) {
-    continueBooking();
     return null;
   }
 
