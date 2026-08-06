@@ -176,6 +176,7 @@ const Step2_ReviewAndPayment = ({
 
       const bookingDetails = {
         userID: parseInt(userId, 10),
+         ticket_distribution: "test",
         sourceAddressID: addressId,
         destinationAddressID: addressId,
         pickupDate: new Date(shiftingDate).toISOString(),
