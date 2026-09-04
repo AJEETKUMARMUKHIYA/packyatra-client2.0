@@ -60,10 +60,11 @@ const Step2_ReviewAndPayment = ({
 }) => {
   const [priceLoading, setPriceLoading] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [downloadLoading, setDownloadLoading] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [error, setError] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  
+
   // Customer info inputs
   const [customerName, setCustomerName] = useState(bookingData.customerName || "");
   const [customerEmail, setCustomerEmail] = useState(bookingData.customerEmail || "");
@@ -87,7 +88,7 @@ const Step2_ReviewAndPayment = ({
 
   const calculatePrice = async () => {
     const { serviceLift, serviceLiftdrop, selectedFloor, vanAccessible, roadDistance } = bookingData;
-    
+
     if (!distance || distance <= 0 || totalCFT <= 0 || bookingData.selectedItems.length === 0) {
       setPriceLoading(false);
       setValidationMessage("Please contact support team at +91 90715 35535.");
@@ -96,14 +97,14 @@ const Step2_ReviewAndPayment = ({
     }
     setPriceLoading(true);
     setError(null);
-    
+
     try {
       const dist = parseInt(distance, 10) || 0;
       const cft = parseInt(totalCFT, 10) || 0;
       const response = await AxiosClient.get(
         `/Price/GetPrice?distance=${dist}&cftTotal=${cft}&activeTab=${priceCalculateCitywise}`
       );
-      
+
       if (response.status === 200) {
         if (!response.data || !response.data.price || response.data.price <= 0) {
           setPriceLoading(false);
@@ -113,17 +114,17 @@ const Step2_ReviewAndPayment = ({
         }
 
         let basePrice = response.data.price || 0;
-        let floorCharge = selectedFloor === 0 ? selectedFloor * 200 : 0;    
+        let floorCharge = selectedFloor === 0 ? selectedFloor * 200 : 0;
         let roadCharge = 0;
         const pickupLiftCharge = serviceLift === "no" ? 500 : 0;
         const dropLiftCharge = serviceLiftdrop === "no" ? 500 : 0;
 
         const totalPrice = basePrice + floorCharge + roadCharge + pickupLiftCharge + dropLiftCharge;
-        
+
         setCalculatedPrice(totalPrice);
-        onUpdate({ 
+        onUpdate({
           price: totalPrice,
-          totalCFT: totalCFT 
+          totalCFT: totalCFT
         });
       }
     } catch (error) {
@@ -150,9 +151,78 @@ const Step2_ReviewAndPayment = ({
     } else if (!/^\d{10}$/.test(customerPhone)) {
       newErrors.phone = "Please enter a valid 10-digit phone number";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  /**
+   * Creates the booking on the backend (if it hasn't been created yet),
+   * derives the quotation number from the returned bookingID, persists
+   * that number back to the DB, and pushes both up to bookingData via
+   * onUpdate. Returns { bookingId, quotationNumber }.
+   *
+   * Safe to call multiple times — if bookingData.bookingId already
+   * exists (e.g. user already downloaded the quotation), it reuses it
+   * instead of creating a duplicate booking.
+   */
+  const createBookingIfNeeded = async () => {
+    if (bookingData.bookingId && bookingData.quotationNumber) {
+      return {
+        bookingId: bookingData.bookingId,
+        quotationNumber: bookingData.quotationNumber
+      };
+    }
+
+    const { selectedItems, selectedTimeSlot, serviceLift, selectedFloor, serviceLiftdrop, floordrop, vanAccessible, roadDistance, roadDetails } = bookingData;
+
+    const bookingDetails = {
+      userID: parseInt(userId, 10),
+      ticket_distribution: "test",
+      sourceAddressID: addressId,
+      destinationAddressID: addressId,
+      pickupDate: new Date(shiftingDate).toISOString(),
+      pickupTimeSlotID: selectedTimeSlot || 1,
+      status: "Pending",
+      totalAmount: calculatedPrice,
+      bookingAmountPaid: 0.0,
+       quotationNumber: "", 
+      totalVolume: totalCFT,
+      bookingItemList: selectedItems.map(item => ({
+        itemID: item.itemID,
+        quantity: item.quantity
+      })),
+      additionalServices: {
+        serviceLift: serviceLift === "yes",
+        floorNumber: selectedFloor || 0,
+        vanAccessible: vanAccessible === "yes",
+        roadDistance: roadDistance || "",
+        roadDetails: roadDetails || ""
+      }
+    };
+
+    const response = await AxiosClient.post(
+      "/booking/CreateBooking",
+      bookingDetails,
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    if (response.status !== 200) {
+      throw new Error("Failed to create booking. Please try again.");
+    }
+
+    const createdBookingId = response.data.bookingID;
+    const quotationNumber = `PACKY-${createdBookingId}`;
+     // Update local booking states
+    onUpdate({
+      bookingId: createdBookingId,
+      quotationNumber,
+      customerName,
+      customerEmail,
+      customerPhone
+    });
+
+    return { bookingId: createdBookingId, quotationNumber };
   };
 
   const handleProceedToPayment = async () => {
@@ -172,88 +242,42 @@ const Step2_ReviewAndPayment = ({
     setError(null);
 
     try {
-      const { selectedItems, selectedTimeSlot, serviceLift, selectedFloor, serviceLiftdrop, floordrop, vanAccessible, roadDistance, roadDetails } = bookingData;
+      // Reuses the booking created during "Download Estimated Quotation"
+      // if the user already clicked it; otherwise creates it now.
+      const { bookingId: createdBookingId, quotationNumber } = await createBookingIfNeeded();
 
-      const bookingDetails = {
-        userID: parseInt(userId, 10),
-         ticket_distribution: "test",
-        sourceAddressID: addressId,
-        destinationAddressID: addressId,
-        pickupDate: new Date(shiftingDate).toISOString(),
-        pickupTimeSlotID: selectedTimeSlot || 1,
-        status: "Pending",
-        totalAmount: calculatedPrice,
-        bookingAmountPaid: 0.0,
-        quotationNumber: "",
-        totalVolume: totalCFT,
-        bookingItemList: selectedItems.map(item => ({
-          itemID: item.itemID,
-          quantity: item.quantity
-        })),
-        additionalServices: {
-          serviceLift: serviceLift === "yes",
-          floorNumber: selectedFloor || 0,
-          vanAccessible: vanAccessible === "yes",
-          roadDistance: roadDistance || "",
-          roadDetails: roadDetails || ""
-        }
-      };
+      // Process PhonePe payment initiation
+      const amountInPaise = Math.round(tokenAmount * 100);
+      const payRes = await AxiosClient.post("/phonepe/pay", {
+        amount: amountInPaise
+      });
 
-      // 1. Create the booking on the backend
-      const response = await AxiosClient.post(
-        "/booking/CreateBooking",
-        bookingDetails,
-        { headers: { "Content-Type": "application/json" } }
-      );
+      const { merchantOrderId, redirectUrl } = payRes.data;
 
-      if (response.status === 200) {
-        const createdBookingId = response.data.bookingID;
-        const quotationNumber = response.data.quotationNumber;
-
-        // Update local booking states
-        onUpdate({
-          bookingId: createdBookingId,
-          quotationNumber: quotationNumber,
+      // Save session payload for redirect callback to complete the state
+      localStorage.setItem("merchantTransactionId", merchantOrderId);
+      localStorage.setItem(
+        "postPaymentPayload",
+        JSON.stringify({
+          bookingData: {
+            ...bookingData,
+            bookingId: createdBookingId,
+            quotationNumber,
+            price: calculatedPrice,
+            totalCFT: totalCFT
+          },
           customerName,
           customerEmail,
-          customerPhone
-        });
+          customerPhone,
+          paymentMethod: "UPI",
+          tokenAmount,
+          balanceAmount,
+          timeSlots
+        })
+      );
 
-        // 2. Process PhonePe payment initiation
-        const amountInPaise = Math.round(tokenAmount * 100);
-        const payRes = await AxiosClient.post("/phonepe/pay", {
-          amount: amountInPaise
-        });
-
-        const { merchantOrderId, redirectUrl } = payRes.data;
-
-        // Save session payload for redirect callback to complete the state
-        localStorage.setItem("merchantTransactionId", merchantOrderId);
-        localStorage.setItem(
-          "postPaymentPayload",
-          JSON.stringify({
-            bookingData: {
-              ...bookingData,
-              bookingId: createdBookingId,
-              quotationNumber: quotationNumber,
-              price: calculatedPrice,
-              totalCFT: totalCFT
-            },
-            customerName,
-            customerEmail,
-            customerPhone,
-            paymentMethod: "UPI",
-            tokenAmount,
-            balanceAmount,
-            timeSlots
-          })
-        );
-
-        // Redirect to PhonePe payment gateway
-        window.location.href = redirectUrl;
-      } else {
-        throw new Error("Failed to create booking. Please try again.");
-      }
+      // Redirect to PhonePe payment gateway
+      window.location.href = redirectUrl;
     } catch (err) {
       console.error(err);
       setError(err.message || "An error occurred. Please contact our support team.");
@@ -269,11 +293,31 @@ const Step2_ReviewAndPayment = ({
       return;
     }
 
+    if (!validateForm()) {
+      setError("Please fill out all required fields correctly.");
+      setSnackbarOpen(true);
+      return;
+    }
+
+    if (calculatedPrice <= 0) {
+      setError("Please wait for the price calculation to complete.");
+      setSnackbarOpen(true);
+      return;
+    }
+
+    setDownloadLoading(true);
+    setError(null);
+
     try {
+      // Creates the booking right here (or reuses one already created),
+      // so the PDF can show the real PACKY-{bookingId} number.
+      const { quotationNumber } = await createBookingIfNeeded();
+
       const timeSlotName = timeSlots.find(s => s.timeSlotID === bookingData.selectedTimeSlot)?.timeSlotName || "Selected";
       const confirmationPdf = await generateBookingConfirmationPDF({
         ...bookingData,
         price: calculatedPrice,
+        quotationNumber,
         transactionId: `EST-${Date.now()}`,
         customerName,
         customerEmail,
@@ -285,7 +329,9 @@ const Step2_ReviewAndPayment = ({
         toAddress,
         totalCFT,
         serviceLift: bookingData.serviceLift,
-        serviceLiftdrop: bookingData.serviceLiftdrop
+        serviceLiftdrop: bookingData.serviceLiftdrop,
+        selectedFloor: bookingData.selectedFloor,
+        floordrop: bookingData.floordrop,
       });
 
       if (confirmationPdf) {
@@ -300,8 +346,10 @@ const Step2_ReviewAndPayment = ({
       }
     } catch (error) {
       console.error("PDF generation failed:", error);
-      setError("Failed to generate PDF quotation. Please try again.");
+      setError(error.message || "Failed to generate PDF quotation. Please try again.");
       setSnackbarOpen(true);
+    } finally {
+      setDownloadLoading(false);
     }
   };
 
@@ -470,11 +518,11 @@ const Step2_ReviewAndPayment = ({
                     <Typography color="text.secondary">Total Shifting Volume</Typography>
                     <Typography fontWeight={500}>{totalCFT.toFixed(1)} CFT ({bookingData.selectedItems.length} items)</Typography>
                   </Box>
-                  
+
                   <Divider />
-                  
-                  <Box sx={{ 
-                    display: "flex", 
+
+                  <Box sx={{
+                    display: "flex",
                     justifyContent: "space-between",
                     p: 2,
                     borderRadius: 1,
@@ -511,10 +559,11 @@ const Step2_ReviewAndPayment = ({
                     variant="outlined"
                     fullWidth
                     onClick={handleDownloadQuotation}
-                    startIcon={<Download />}
+                    disabled={downloadLoading}
+                    startIcon={downloadLoading ? <CircularProgress size={20} /> : <Download />}
                     sx={{ textTransform: "none" }}
                   >
-                    Download Estimated Quotation
+                    {downloadLoading ? "Preparing Quotation..." : "Download Estimated Quotation"}
                   </Button>
 
                   <Button

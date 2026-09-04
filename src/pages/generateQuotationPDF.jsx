@@ -86,7 +86,11 @@ export const generateBookingConfirmationPDF = async (bookingData) => {
     const year = d.getFullYear();
     return `${day} ${month} ${year}`;
   };
-
+  const getTimeSlotName = () => {
+    if (!bookingData.selectedTimeSlot) return "Not selected";
+    const slot = timeSlots.find(s => s.timeSlotID === bookingData.selectedTimeSlot);
+    return slot ? slot.timeSlotName : "Selected Slot";
+  };
   /* =================================
      HEADER
   ================================= */
@@ -141,6 +145,53 @@ export const generateBookingConfirmationPDF = async (bookingData) => {
   doc.text("OFFICIAL RELOCATION QUOTATION", margin + 6, y);
   y += 10;
 
+  const formatFloor = (fl) => {
+    if (fl === undefined || fl === null || fl === "") return "-";
+    if (fl === 0 || fl === "0" || String(fl).trim().toLowerCase() === "ground" || String(fl).trim().toLowerCase() === "ground floor") {
+      return "Ground Floor (0)";
+    }
+    const num = Number(fl);
+    if (!isNaN(num)) {
+      if (num === 0) return "Ground Floor (0)";
+      if (num === 1) return "1st Floor";
+      if (num === 2) return "2nd Floor";
+      if (num === 3) return "3rd Floor";
+      return `${num}th Floor`;
+    }
+    return String(fl);
+  };
+
+  const formatLift = (val) => {
+    if (!val) return "-";
+    const s = String(val).trim().toLowerCase();
+    if (s === "yes") return "Yes";
+    if (s === "no") return "No";
+    return String(val);
+  };
+
+  const pickupFloorRaw =
+    bookingData.selectedFloor !== undefined && bookingData.selectedFloor !== null
+      ? bookingData.selectedFloor
+      : bookingData.pickupFloor !== undefined && bookingData.pickupFloor !== null
+      ? bookingData.pickupFloor
+      : bookingData.floor !== undefined && bookingData.floor !== null
+      ? bookingData.floor
+      : bookingData.floorNumber !== undefined && bookingData.floorNumber !== null
+      ? bookingData.floorNumber
+      : bookingData.pickupFloorNumber;
+
+  const dropFloorRaw =
+    bookingData.floordrop !== undefined && bookingData.floordrop !== null
+      ? bookingData.floordrop
+      : bookingData.dropFloor !== undefined && bookingData.dropFloor !== null
+      ? bookingData.dropFloor
+      : bookingData.floorDrop !== undefined && bookingData.floorDrop !== null
+      ? bookingData.floorDrop
+      : bookingData.dropFloorNumber;
+
+  const pickupFloorDisplay = formatFloor(pickupFloorRaw);
+  const dropFloorDisplay = formatFloor(dropFloorRaw);
+
   /* =======================
      CUSTOMER INFORMATION TABLE
   ======================= */
@@ -148,9 +199,10 @@ export const generateBookingConfirmationPDF = async (bookingData) => {
     startY: y,
     body: [
       ["Quotation No:", quotationNumber || "-", "Pickup Date:", formatDate(shiftingDate) || "-"],
-      ["Customer Name:", customerName || "-", "Preferred Slot:", selectedTimeSlot || "-"],
+      ["Customer Name:", customerName || "-", "Preferred Slot:", getTimeSlotName() || "-"],
       ["Contact Phone:", customerPhone || "-", "Volume Estimate:", totalCFT ? `${totalCFT} CFT` : "-"],
-      ["Service Lift at Pickup:", serviceLift || "-", "Service Lift at Drop:", serviceLiftdrop || "-"],
+      ["Pickup Floor:", pickupFloorDisplay, "Drop Floor:", dropFloorDisplay],
+      ["Service Lift at Pickup:", formatLift(serviceLift), "Service Lift at Drop:", formatLift(serviceLiftdrop)],
     ],
     theme: "grid",
     styles: {

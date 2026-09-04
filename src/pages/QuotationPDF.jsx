@@ -1,28 +1,19 @@
-import React from 'react';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import { format } from 'date-fns';
+import { generateBookingConfirmationPDF } from './generateQuotationPDF';
 
-const generateQuotationPDF = (bookingData, userData, addressData) => {
-  return new Promise((resolve, reject) => {
-    try {
-      // Create PDF document
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      // Add content to PDF
-      // ... (use the PDF generation code from earlier)
-
-      // Generate PDF as blob
-      const pdfBlob = doc.output('blob');
-      resolve(pdfBlob);
-    } catch (error) {
-      reject(error);
-    }
-  });
+const generateQuotationPDF = async (bookingData = {}, userData = {}, addressData = {}) => {
+  const mergedData = {
+    ...bookingData,
+    customerName: userData?.name || bookingData.customerName || "Customer",
+    customerEmail: userData?.email || bookingData.customerEmail || "",
+    customerPhone: userData?.mobile || userData?.phone || bookingData.customerPhone || "",
+    fromAddress: addressData?.fromAddress || addressData?.pickupAddress || bookingData.fromAddress || "",
+    toAddress: addressData?.toAddress || addressData?.dropAddress || bookingData.toAddress || "",
+    selectedFloor: bookingData.selectedFloor ?? bookingData.pickupFloor ?? addressData?.pickupFloor ?? addressData?.selectedFloor,
+    floordrop: bookingData.floordrop ?? bookingData.dropFloor ?? addressData?.dropFloor ?? addressData?.floordrop,
+    serviceLift: bookingData.serviceLift ?? addressData?.serviceLift,
+    serviceLiftdrop: bookingData.serviceLiftdrop ?? addressData?.serviceLiftdrop,
+  };
+  return generateBookingConfirmationPDF(mergedData);
 };
 
 export default generateQuotationPDF;
